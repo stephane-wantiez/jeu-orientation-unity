@@ -5,22 +5,27 @@ public class ChooseWindowProxy : MonoBehaviour
 {
     private void chooseColor(int colorIndex)
     {
-        // TODO
+        DicesManager.Instance.onChosenRepereColorWithIndex(colorIndex-1);
+        PlayersManager.Instance.getCurrentPlayer().setDiceRepere1WithIndex(colorIndex-1);
     }
 
     private void chooseCardinal(RepereType.TypePointCardinal value)
     {
-        // TODO
+        DicesManager.Instance.onChosenRepereCardinal(value);
+        PlayersManager.Instance.getCurrentPlayer().setDiceRepere2WithCardinal(value);
     }
 
     private void chooseOrientation(Orientation.OrientationType value)
     {
-        // TODO
+        Orientation orientation = new Orientation(value);
+        DicesManager.Instance.setDiceOrientation(orientation);
+        PlayersManager.Instance.getCurrentPlayer().setDiceOrientation(orientation);
     }
 
     private void chooseDistance(int distance)
     {
-        // TODO
+        DicesManager.Instance.setDiceDistance(distance);
+        PlayersManager.Instance.getCurrentPlayer().setDiceDistance(distance);
     }
 
     public void chooseColor1()

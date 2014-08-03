@@ -6,8 +6,11 @@ public class GameManager : MonoBehaviour
     private static GameManager _instance;
     public static GameManager Instance { get { return _instance; } }
 
+    public const int MAX_DISTANCE = 5;
+
     public enum GameType { Simple, Advanced }
     public GameType gameType;
+    public bool checkOrientation;
 
     public enum GameState { GameConfiguration, BoardGeneration, PlacementTresors, PositionDepartPions, Jeu, Fin }
     private GameState _state;
@@ -30,7 +33,7 @@ public class GameManager : MonoBehaviour
 
     private void startup()
     {
-        updateState(GameState.PlacementTresors, true);
+        updateState(GameState.BoardGeneration, true);
     }
 
     private void updateState(GameState newState, bool forceUpdate)
@@ -39,6 +42,31 @@ public class GameManager : MonoBehaviour
         {
             _state = newState;
             if (OnGameStateChangeEvents != null) OnGameStateChangeEvents(newState);
+            checkState();
+        }
+    }
+
+    private void checkState()
+    {
+        switch (_state)
+        {
+            case GameState.GameConfiguration:
+                break;
+            case GameState.BoardGeneration:
+                BoardGenerator.Instance.generateBoard();
+                ReperesManager.Instance.generateReperes();
+                State = GameState.PlacementTresors;
+                break;
+            case GameState.PlacementTresors:
+                break;
+            case GameState.PositionDepartPions:
+                break;
+            case GameState.Jeu:
+                break;
+            case GameState.Fin:
+                break;
+            default:
+                break;
         }
     }
 
@@ -46,6 +74,8 @@ public class GameManager : MonoBehaviour
     {
         switch (State)
         {
+            case GameState.BoardGeneration:
+                break;
             case GameState.PlacementTresors:
                 Tresors.Instance.placeTresorInCell(cell);
                 break;

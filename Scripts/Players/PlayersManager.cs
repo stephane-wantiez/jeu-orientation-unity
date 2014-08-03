@@ -8,7 +8,7 @@ public class PlayersManager : MonoBehaviour
 {
     public const int NB_PLAYERS_MIN = 2;
     public const int NB_PLAYERS_MAX = 5;
-    public const string LOCKEY_PLAYER_TURN_START = "turn_start";
+    public const string LOCKEY_PLAYER_TURN_START = "player_turn";
     public const string LOCKEY_PLAYER_STARTUP_POS = "startup_player_position";
 
     private static PlayersManager _instance;
@@ -19,19 +19,15 @@ public class PlayersManager : MonoBehaviour
     public float playerFixedPositionInZ;
 
     public PlayerUI[] playersUI;
-    public GameObject[] playersIcons;
-
-    public GameObject playerTurnWindow;
-    public UILabel playerTurnLabel;
-    public GameObject playerStartupPositionWindow;
-    public UILabel playerStartupPositionLabel;
+    public PlayerIcon[] playersIcons;
+    public Transform playersParent;
 
     [HideInInspector]
     public Player[] players;
     [HideInInspector]
     public int currentPlayerIndex;
 
-    private List<GameObject> availablePlayerIcons = new List<GameObject>();
+    private List<PlayerIcon> availablePlayerIcons = new List<PlayerIcon>();
 
     void Awake()
     {
@@ -50,12 +46,23 @@ public class PlayersManager : MonoBehaviour
     {
         if ((playersIcons != null) && (playersIcons.Length != 0))
         {
-            if (playersIcons.Length < nbPlayers) Debug.LogError("There are less player icons available than players");
-            while (availablePlayerIcons.Count < nbPlayers)
+            bool checkOrientation = GameManager.Instance.checkOrientation;
+            PlayerIcon[] validPlayersIcons = Array.FindAll(playersIcons, p => p.orientedIcon == checkOrientation);
+
+            if (validPlayersIcons.Length != 0)
             {
-                Array.ForEach(playersIcons, p => availablePlayerIcons.Add(p));
+                if (validPlayersIcons.Length < nbPlayers) Debug.LogWarning("There are less " + (checkOrientation ? "oriented" : "non oriented") + " player icons available than players");
+
+                while (availablePlayerIcons.Count < nbPlayers)
+                {
+                    Array.ForEach(validPlayersIcons, p => availablePlayerIcons.Add(p));
+                }
+                Utils.ShuffleFY(availablePlayerIcons);
             }
-            Utils.ShuffleFY(availablePlayerIcons);
+            else
+            {
+                Debug.LogError("Missing " + (checkOrientation ? "oriented" : "non oriented") + " player icons");
+            }
         }
         else
         {
@@ -69,7 +76,14 @@ public class PlayersManager : MonoBehaviour
         {
             playerUI.gameObject.SetActive(false);
         }
-        playerTurnWindow.SetActive(false);
+    }
+
+    private void updateUIForCurrentPlayer()
+    {
+        for (int i = 0; i < nbPlayers; ++i)
+        {
+            playersUI[i].onPlayerTurn(i == currentPlayerIndex);
+        }
     }
 
     public void initializePlayers()
@@ -82,7 +96,9 @@ public class PlayersManager : MonoBehaviour
             player.id = i + 1;
             player.fixedPositionInZ = playerFixedPositionInZ;
             player.playerIcon = availablePlayerIcons[0];
-            player.playerIcon = Instantiate(player.playerIcon) as GameObject;
+            GameObject playerIconObject = Instantiate(player.playerIcon.gameObject) as GameObject;
+            player.playerIcon = playerIconObject.GetComponent<PlayerIcon>();
+            player.playerIcon.transform.parent = playersParent;
             availablePlayerIcons.RemoveAt(0);
             players[i] = player;
             playersUI[i].gameObject.SetActive(true);
@@ -90,28 +106,15 @@ public class PlayersManager : MonoBehaviour
         }
     }
 
-    public void displayPlayerTurnWindow()
-    {
-        LocalizationUtils.FillLabelWithLocalizationKey(playerTurnLabel, LOCKEY_PLAYER_TURN_START, currentPlayerIndex);
-        playerTurnWindow.SetActive(true);
-    }
-
     public void onPlayerTurnWindowClosed()
     {
-        playerTurnWindow.SetActive(false);
         players[currentPlayerIndex].onNewTurn();
-    }
-
-    public void setCurrentPlayerAsNext()
-    {
-        ++currentPlayerIndex;
-        if (currentPlayerIndex == nbPlayers) currentPlayerIndex = 0;
     }
 
     public void onPlacementTresorDoneForPlayer()
     {
-        setCurrentPlayerAsNext();
-        if (currentPlayerIndex != 0)
+        ++currentPlayerIndex;
+        if (currentPlayerIndex != nbPlayers)
         {
             Tresors.Instance.startTresorPlacementForPlayer(currentPlayerIndex);
         }
@@ -133,16 +136,6 @@ public class PlayersManager : MonoBehaviour
         player.setCurrentCell(randomCell);
     }
 
-    private void displayStartupPositionMessageForPlayer(Player player)
-    {
-        LocalizationUtils.FillLabelWithLocalizationKey(playerStartupPositionLabel,
-                                                        LOCKEY_PLAYER_STARTUP_POS,
-                                                        player.id + 1,
-                                                        player.currentCell.getRowLabel(),
-                                                        player.currentCell.getColumnLabel());
-        playerStartupPositionWindow.SetActive(true);
-    }
-
     private void chooseStartupPositionForCurrentPlayer()
     {
         Player player = players[currentPlayerIndex];
@@ -150,9 +143,20 @@ public class PlayersManager : MonoBehaviour
         displayStartupPositionMessageForPlayer(player);
     }
 
+    private void displayStartupPositionMessageForPlayer(Player player)
+    {
+        player.playerIcon.setAsPlaying();
+
+        LocalizedMessage startupPositionMessage = new LocalizedMessage( LOCKEY_PLAYER_STARTUP_POS,
+                                                                        player.id + 1,
+                                                                        player.currentCell.getRowLabel(),
+                                                                        player.currentCell.getColumnLabel());
+        PopupManager.Instance.showPopupWithMessage(startupPositionMessage, onStartupPositionMessageValidated);
+    }
+
     public void onStartupPositionMessageValidated()
     {
-        playerStartupPositionWindow.SetActive(false);
+        players[currentPlayerIndex].playerIcon.setAsWaiting();
 
         if (currentPlayerIndex != nbPlayers-1)
         {
@@ -165,19 +169,47 @@ public class PlayersManager : MonoBehaviour
         }
     }
 
+    public void displayPlayerTurnWindow()
+    {
+        PopupManager.Instance.showPopupWithMessage(new LocalizedMessage(LOCKEY_PLAYER_TURN_START, currentPlayerIndex), onPlayerTurnWindowClosed);
+    }
+
+    public void startPlayerTurn()
+    {
+        if (GameManager.Instance.State == GameManager.GameState.Jeu)
+        {
+            updateUIForCurrentPlayer();
+            Player player = players[currentPlayerIndex];
+            player.onNewTurn();
+        }
+    }
+
+    public Player getCurrentPlayer()
+    {
+        return players[currentPlayerIndex];
+    }
+
+    public void onPlayerTurnDone()
+    {
+        players[currentPlayerIndex].onTurnDone();
+        currentPlayerIndex = (currentPlayerIndex + 1) % nbPlayers;
+        startPlayerTurn();
+    }
+
     private void onGameStateChange(GameManager.GameState newState)
     {
+        currentPlayerIndex = 0;
+
         switch (newState)
         {
             case GameManager.GameState.PlacementTresors:
-                currentPlayerIndex = 0;
                 Tresors.Instance.startTresorPlacementForPlayer(0);
                 break;
             case GameManager.GameState.PositionDepartPions:
-                currentPlayerIndex = 0;
                 chooseStartupPositionForCurrentPlayer();
                 break;
             case GameManager.GameState.Jeu:
+                startPlayerTurn();
                 break;
             case GameManager.GameState.Fin:
                 break;

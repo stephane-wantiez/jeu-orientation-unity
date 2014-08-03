@@ -11,12 +11,7 @@ public class Board : MonoBehaviour
     void Awake()
     {
         _instance = this;
-    }
-
-    void Start()
-    {
         generator = GetComponent<BoardGenerator>();
-        generator.generateBoard();
     }
 
     public BoardCell getCellWithIndex(int rowIndex, int columnIndex)
@@ -28,7 +23,6 @@ public class Board : MonoBehaviour
     {
         int randomRowIndex = Random.Range(0, generator.nbRows);
         int randomColumnIndex = Random.Range(0, generator.nbColumns);
-        Debug.Log("boardCells=" + (generator.getBoardCells() == null ? "NULL" : "NOT null"));
         return generator.getBoardCells()[randomRowIndex][randomColumnIndex];
     }
 }

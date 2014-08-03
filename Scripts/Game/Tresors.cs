@@ -12,8 +12,6 @@ public class Tresors : MonoBehaviour
 
     public Transform tresorsParent;
     public GameObject[] tresorPrefabs;
-    public GameObject tresorPlacementWindow;
-    public UILabel tresorPlacementLabel;
     public GameObject tresorUiPanel;
     public UILabel tresorUiRemainingLabel;
     public GameObject tresorUiDoneButton;
@@ -35,13 +33,11 @@ public class Tresors : MonoBehaviour
     {
         currentPlayerId = playerId;
         tresorUiPanel.SetActive(false);
-        LocalizationUtils.FillLabelWithLocalizationKey(tresorPlacementLabel, LOCKEY_TRESOR_PLACEMENT_MSG, playerId+1, nbTresorsPerPlayer);
-        tresorPlacementWindow.SetActive(true);
+        PopupManager.Instance.showPopupWithMessage(new LocalizedMessage(LOCKEY_TRESOR_PLACEMENT_MSG, playerId + 1, nbTresorsPerPlayer), onReadyForTresorPlacement);
     }
 
     public void onReadyForTresorPlacement()
     {
-        tresorPlacementWindow.SetActive(false);
         tresorUiPanel.SetActive(true);
         setCurrentNbTresorsForPlayer(nbTresorsPerPlayer);
     }

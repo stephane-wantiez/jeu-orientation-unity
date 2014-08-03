@@ -12,7 +12,6 @@ public class ReperesManager : MonoBehaviour
 
     private Dictionary<RepereType.TypeCouleur, RepereType> reperesPerColor = new Dictionary<RepereType.TypeCouleur, RepereType>();
     private Dictionary<RepereType.TypePointCardinal, RepereType> reperesPerCard = new Dictionary<RepereType.TypePointCardinal, RepereType>();
-    public RepereType.TypeEnum type;
 
     public Transform repereHautPosition;
     public Transform repereDroitePosition;
@@ -51,22 +50,6 @@ public class ReperesManager : MonoBehaviour
         }
     }
 
-    public RepereType getRandomRepereType()
-    {
-        int randomValue = UnityEngine.Random.Range(0, RepereType.NB_TYPE_TOUS);
-
-        if (type == RepereType.TypeEnum.Couleur)
-        {
-            RepereType.TypeCouleur randomColor = (RepereType.TypeCouleur)randomValue;
-            return reperesPerColor[randomColor];
-        }
-        else
-        {
-            RepereType.TypePointCardinal randomCard = (RepereType.TypePointCardinal)randomValue;
-            return reperesPerCard[randomCard];
-        }
-    }
-
     private void initReperesWithRandomColors()
     {
         RepereType.TypeCouleur[] colors = new RepereType.TypeCouleur[RepereType.NB_TYPE_REGULIER];
@@ -95,9 +78,9 @@ public class ReperesManager : MonoBehaviour
         repereGauche = reperesPerCard[(RepereType.TypePointCardinal)pointCardinalGaucheValue];
     }
 
-    public void initReperes()
+    private void initReperes()
     {
-        if (type == RepereType.TypeEnum.Couleur)
+        if (RepereType.getTypeForCurrentGame() == RepereType.TypeEnum.Couleur)
         {
             initReperesWithRandomColors();
         }
@@ -109,8 +92,8 @@ public class ReperesManager : MonoBehaviour
 
     private void generateRepere(RepereType repereType, Transform reperePosition)
     {
-        Quaternion repereRotation = repereType.rotatePrefabAtGeneration ? reperePosition.rotation : Quaternion.identity;
-        GameObject repereObject = Instantiate(repereType.reperePrefabHaut, reperePosition.position, repereRotation) as GameObject;
+        Quaternion repereRotation = reperePosition.rotation;
+        GameObject repereObject = Instantiate(repereType.gameObject, reperePosition.position, repereRotation) as GameObject;
         repereObject.transform.parent = reperePosition;
     }
 
@@ -124,10 +107,32 @@ public class ReperesManager : MonoBehaviour
 
     public void generateReperes()
     {
+        initReperes();
         clearReperesParents();
         generateRepere(repereHaut, repereHautPosition);
         generateRepere(repereDroite, repereDroitePosition);
         generateRepere(repereBas, repereBasPosition);
         generateRepere(repereGauche, repereGauchePosition);
+    }
+
+    public RepereType getRepereTypeWithIndex(int repereIndex)
+    {
+        switch (repereIndex)
+        {
+            case 0: return repereHaut;
+            case 1: return repereDroite;
+            case 2: return repereBas;
+            default: return repereGauche;
+        }
+    }
+
+    public RepereType getCardinalRepereType(RepereType.TypePointCardinal cardinalType)
+    {
+        if (repereHaut.type == RepereType.TypeEnum.Couleur) return null;
+        if (repereHaut.typePointCardinal == cardinalType) return repereHaut;
+        if (repereDroite.typePointCardinal == cardinalType) return repereDroite;
+        if (repereBas.typePointCardinal == cardinalType) return repereBas;
+        if (repereGauche.typePointCardinal == cardinalType) return repereGauche;
+        return null;
     }
 }

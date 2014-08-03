@@ -6,11 +6,12 @@ public class DicesManager : MonoBehaviour
     private static DicesManager _instance;
     public static DicesManager Instance { get { return _instance; } }
 
+    private const string LOCKEY_PASS_MSG = "dice_pass_msg";
+
     public GameObject diceColor;
     public GameObject diceCardinal;
     public GameObject diceDistance;
     public GameObject diceOrientation;
-    public GameObject passWindow;
 
     public UISprite diceColorSprite;
     public UILabel diceCardinalValue;
@@ -29,6 +30,11 @@ public class DicesManager : MonoBehaviour
     public GameObject diceDistanceChoose;
     public GameObject diceDistanceChooseWindow;
 
+    public UIButton[] diceColorChoiceButtons;
+
+    private string diceCardinal1Value;
+    private string diceCardinal2Value;
+
     void Awake()
     {
         _instance = this;
@@ -45,19 +51,19 @@ public class DicesManager : MonoBehaviour
         diceCardinal.SetActive(false);
         diceDistance.SetActive(false);
         diceOrientation.SetActive(false);
-        passWindow.SetActive(false);
     }
 
-    public void initializeForType(GameManager.GameType type)
+    public void showDices()
     {
         hideDices();
 
         diceDistance.SetActive(true);
-        diceOrientation.SetActive(true);
+        if (GameManager.Instance.checkOrientation) diceOrientation.SetActive(true);
 
-        if (type == GameManager.GameType.Simple)
+        if (GameManager.Instance.gameType == GameManager.GameType.Simple)
         {
             diceColor.SetActive(true);
+            setColorsOfChoiceButtons();
         }
         else // type is Advanced
         {
@@ -65,42 +71,105 @@ public class DicesManager : MonoBehaviour
         }
     }
 
-    public void setDiceColorForRepere(RepereType chosenRepere)
+    public void displayPassMessage(bool display = true)
     {
-        diceColorSprite.color = chosenRepere.getTypeCouleurValue();
+        if (display)
+        {
+            PopupManager.Instance.showPopupWithMessage(new LocalizedMessage(LOCKEY_PASS_MSG), onPassMessageValidated);
+        }
+    }
 
-        bool diceColorChooseFlag = chosenRepere.typeCouleur == RepereType.TypeCouleur.Multiple;
-        bool diceColorPassFlag = chosenRepere.typeCouleur == RepereType.TypeCouleur.Passe;
+    public void onPassMessageValidated()
+    {
+        PlayersManager.Instance.onPlayerTurnDone();
+    }
 
+    private void setColorOfChoiceButton(UIButton button, Color color)
+    {
+        UISprite buttonSprite = button.gameObject.GetComponent<UISprite>();
+        buttonSprite.color = color;
+        button.defaultColor = color;
+        button.hover = color;
+        button.pressed = color;
+        button.disabledColor = color;
+    }
+
+    private void setColorsOfChoiceButtons()
+    {
+        for (int i = 0; i < 4; ++i)
+        {
+            RepereType repereType = ReperesManager.Instance.getRepereTypeWithIndex(i);
+            setColorOfChoiceButton(diceColorChoiceButtons[i], repereType.getTypeCouleurValue());
+        }
+    }
+
+    public void setDiceColorForRepere(RepereType.TypeCouleur repereType, Color repereColor)
+    {
+        bool diceColorChooseFlag = repereType == RepereType.TypeCouleur.Multiple;
+        bool diceColorPassFlag = repereType == RepereType.TypeCouleur.Passe;
+
+        diceColorSprite.color = repereColor;
+        diceColorSprite.gameObject.SetActive(!diceColorChooseFlag && !diceColorPassFlag);
         diceColorChoose.SetActive(diceColorChooseFlag);
         diceColorChooseWindow.SetActive(diceColorChooseFlag);
         diceColorPass.SetActive(diceColorPassFlag);
-        passWindow.SetActive(diceColorPassFlag);
+        displayPassMessage(diceColorPassFlag);
     }
 
-    public void setDiceCardinalForReperes(RepereType chosenRepere1, RepereType chosenRepere2)
+    public void onChosenRepereColorWithIndex(int index)
     {
-        string cardValue = chosenRepere1.getTypePointCardinalValue(true);
-        string card2Value = chosenRepere2.getTypePointCardinalValue(false);
+        RepereType repere = ReperesManager.Instance.getRepereTypeWithIndex(index);
+        setDiceColorForRepere(repere.typeCouleur, repere.getTypeCouleurValue());
+    }
 
-        if ((chosenRepere1.typePointCardinal != chosenRepere2.typePointCardinal) ||
-            (chosenRepere1.typePointCardinal == RepereType.TypePointCardinal.Special) ||
-            (chosenRepere2.typePointCardinal == RepereType.TypePointCardinal.Special))
+    private void setDiceCardinalLabel(string repere1, string repere2)
+    {
+        string cardValue = repere1;
+
+        if (repere1 != repere2)
         {
-            if ((cardValue != "") && (card2Value != "")) cardValue += " - ";
-            cardValue += card2Value;
+            if ((cardValue != "") && (repere2 != "")) cardValue += " - ";
+            cardValue += repere2;
         }
 
         diceCardinalValue.text = cardValue;
+    }
 
-        bool diceCardChooseFlag = chosenRepere2.typePointCardinal == RepereType.TypePointCardinal.Special;
-        bool diceCardPass1Flag = chosenRepere1.typePointCardinal == RepereType.TypePointCardinal.Passe;
-        bool diceCardPass2Flag = chosenRepere2.typePointCardinal == RepereType.TypePointCardinal.Passe;
+    public void setDiceCardinalForReperes(RepereType.TypePointCardinal repereType1, RepereType.TypePointCardinal repereType2, string card1Value, string card2Value)
+    {
+        setDiceCardinalLabel(card1Value, card2Value);
+        diceCardinal1Value = card1Value;
+        diceCardinal2Value = card2Value;
+
+        bool diceCardChooseFlag = repereType2 == RepereType.TypePointCardinal.Special;
+        bool diceCardPass1Flag = repereType1 == RepereType.TypePointCardinal.Passe;
+        bool diceCardPass2Flag = repereType2 == RepereType.TypePointCardinal.Passe;
 
         diceCardinalChoose.SetActive(diceCardChooseFlag);
         diceCardinalChooseWindow.SetActive(diceCardChooseFlag);
         diceCardinalPass.SetActive(diceCardPass1Flag || diceCardPass2Flag);
-        passWindow.SetActive(diceCardPass1Flag || diceCardPass2Flag);
+        displayPassMessage(diceCardPass1Flag || diceCardPass2Flag);
+    }
+
+    public void onChosenRepereCardinal(RepereType.TypePointCardinal cardinalType)
+    {
+        RepereType repere = ReperesManager.Instance.getCardinalRepereType(cardinalType);
+        string repereInfo = repere.getTypePointCardinalValue(false);
+        setDiceCardinalLabel(diceCardinal1Value, repereInfo);
+
+        diceCardinalChoose.SetActive(false);
+        diceCardinalChooseWindow.SetActive(false);
+        diceCardinalPass.SetActive(false);
+    }
+
+    public void setDiceDistance(int distance)
+    {
+        bool chooseDistance = distance == GameManager.MAX_DISTANCE + 1;
+
+        if (!chooseDistance) diceDistanceValue.text = distance.ToString();
+        diceDistanceValue.gameObject.SetActive(!chooseDistance);
+        diceDistanceChoose.SetActive(chooseDistance);
+        diceDistanceChooseWindow.SetActive(chooseDistance);
     }
 
     public void setDiceOrientation(Orientation chosenOrientation)
@@ -110,9 +179,10 @@ public class DicesManager : MonoBehaviour
         bool diceOrientationChooseFlag = chosenOrientation.type == Orientation.OrientationType.Choose;
         bool diceOrientationPassFlag = chosenOrientation.type == Orientation.OrientationType.Pass;
 
+        diceOrientationValue.gameObject.SetActive(!diceOrientationChooseFlag && !diceOrientationPassFlag);
         diceOrientationChoose.SetActive(diceOrientationChooseFlag);
         diceOrientationChooseWindow.SetActive(diceOrientationChooseFlag);
         diceOrientationPass.SetActive(diceOrientationPassFlag);
-        passWindow.SetActive(diceOrientationPassFlag);
+        displayPassMessage(diceOrientationPassFlag);
     }
 }

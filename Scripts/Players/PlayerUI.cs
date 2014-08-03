@@ -30,24 +30,10 @@ public class PlayerUI : MonoBehaviour
     public void initializeWithPlayer(Player _player)
     {
         player = _player;
-        player.OnTurnStateChangeEvents += onPlayerTurnStateChange;
         initPlayerIdLabel();
     }
 
-    private void onPlayerTurnStateChange(Player.TurnState newTurnState)
-    {
-        switch (newTurnState)
-        {
-            case Player.TurnState.FinTour:
-                onPlayerTurn(false);
-                break;
-            default:
-                onPlayerTurn(true);
-                break;
-        }
-    }
-
-    private void onPlayerTurn(bool turn)
+    public void onPlayerTurn(bool turn)
     {
         playerUIPanel.alpha = turn ? ENABLED_UI_ALPHA : DISABLED_UI_ALPHA;
     }

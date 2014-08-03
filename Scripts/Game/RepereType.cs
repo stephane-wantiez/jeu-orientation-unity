@@ -4,8 +4,7 @@ using System.Linq;
 using System.Text;
 using UnityEngine;
 
-[Serializable]
-public class RepereType
+public class RepereType : MonoBehaviour
 {
     public const int NB_TYPE_REGULIER = 4;
     public const int NB_TYPE_TOUS = 6;
@@ -25,13 +24,33 @@ public class RepereType
     public enum TypePointCardinal { Nord, Est, Sud, Ouest, Passe, Special }
     public TypePointCardinal typePointCardinal;
 
-    public GameObject reperePrefabHaut;
-    public bool rotatePrefabAtGeneration;
-    public GameObject deRepere;
-
-    public Color getTypeCouleurValue()
+    public bool hasRegularValue()
     {
-        switch (typeCouleur)
+        if (type == TypeEnum.Couleur)
+        {
+            return typeCouleur < TypeCouleur.Passe;
+        }
+        else
+        {
+            return typePointCardinal < TypePointCardinal.Passe;
+        }
+    }
+
+    public static TypeEnum getTypeForCurrentGame()
+    {
+        if (GameManager.Instance.gameType == GameManager.GameType.Simple)
+        {
+            return TypeEnum.Couleur;
+        }
+        else
+        {
+            return TypeEnum.PointCardinal;
+        }
+    }
+
+    public static Color getTypeCouleurValue(TypeCouleur _typeCouleur)
+    {
+        switch (_typeCouleur)
         {
             case TypeCouleur.Rouge: return Color.red;
             case TypeCouleur.Bleu: return Color.blue;
@@ -41,16 +60,26 @@ public class RepereType
         }
     }
 
-    public string getTypePointCardinalValue(bool returnSpecialAsTresor)
+    public Color getTypeCouleurValue()
     {
-        switch (typePointCardinal)
+        return getTypeCouleurValue(typeCouleur);
+    }
+
+    public static string getTypePointCardinalValue(TypePointCardinal _typePointCardinal, bool _returnSpecialAsTresor)
+    {
+        switch (_typePointCardinal)
         {
             case TypePointCardinal.Nord: return Localization.Get(LOCKEY_CARDINAL_NORD);
             case TypePointCardinal.Est: return Localization.Get(LOCKEY_CARDINAL_EST);
             case TypePointCardinal.Sud: return Localization.Get(LOCKEY_CARDINAL_SUD);
             case TypePointCardinal.Ouest: return Localization.Get(LOCKEY_CARDINAL_OUEST);
-            case TypePointCardinal.Special: return returnSpecialAsTresor ? Localization.Get(LOCKEY_CARDINAL_SPECIAL_TRESOR) : "";
+            case TypePointCardinal.Special: return _returnSpecialAsTresor ? Localization.Get(LOCKEY_CARDINAL_SPECIAL_TRESOR) : "";
             default: return "";
         }
+    }
+
+    public string getTypePointCardinalValue(bool _returnSpecialAsTresor)
+    {
+        return getTypePointCardinalValue(typePointCardinal, _returnSpecialAsTresor);
     }
 }

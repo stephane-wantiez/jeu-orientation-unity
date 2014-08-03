@@ -8,7 +8,7 @@ using UnityEngine;
 public class Orientation
 {
     public const int NB_ORIENT_REGULIER = 4;
-    public const int NB_ORIENT_TOUS = 5;
+    public const int NB_ORIENT_TOUS = 6;
     public const string LOCKEY_ORIENTATION_LEFT = "orientation_l";
     public const string LOCKEY_ORIENTATION_RIGHT = "orientation_r";
     public const string LOCKEY_ORIENTATION_FORWARD = "orientation_f";
@@ -16,6 +16,16 @@ public class Orientation
 
     public enum OrientationType { Left, Right, Forward, Backward, Pass, Choose }
     public OrientationType type;
+
+    public Orientation(OrientationType type)
+    {
+        this.type = type;
+    }
+
+    public bool isRegularOrientation()
+    {
+        return type < OrientationType.Pass;
+    }
 
     public string getTypeValue()
     {
@@ -27,5 +37,11 @@ public class Orientation
             case OrientationType.Backward: return Localization.Get(LOCKEY_ORIENTATION_BACKWARD);
             default: return "";
         }
+    }
+
+    public static Orientation getRandomOrientation()
+    {
+        int randomValue = UnityEngine.Random.Range(0, NB_ORIENT_TOUS);
+        return new Orientation((OrientationType)randomValue);
     }
 }
