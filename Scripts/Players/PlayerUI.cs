@@ -1,5 +1,4 @@
 ﻿using UnityEngine;
-using System.Collections;
 
 public class PlayerUI : MonoBehaviour
 {
@@ -7,7 +6,7 @@ public class PlayerUI : MonoBehaviour
     public const float DISABLED_UI_ALPHA = 0.4f;
     public const string PLAYER_ID_LABEL_LOCKEY = "player_id";
 
-    public UIPanel playerUIPanel;
+    public UIPanel playerUiPanel;
     public UILabel playerIdLabel;
 
     private Player player;
@@ -35,6 +34,6 @@ public class PlayerUI : MonoBehaviour
 
     public void onPlayerTurn(bool turn)
     {
-        playerUIPanel.alpha = turn ? ENABLED_UI_ALPHA : DISABLED_UI_ALPHA;
+        playerUiPanel.alpha = turn ? ENABLED_UI_ALPHA : DISABLED_UI_ALPHA;
     }
 }

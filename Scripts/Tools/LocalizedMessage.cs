@@ -1,7 +1,4 @@
-﻿using UnityEngine;
-using System.Collections;
-
-public class LocalizedMessage
+﻿public class LocalizedMessage
 {
     public string localizationKey;
     public object[] messageParameters;

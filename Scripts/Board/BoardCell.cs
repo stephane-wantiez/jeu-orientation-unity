@@ -11,6 +11,7 @@ public class BoardCell : MonoBehaviour
     public Color clickColor;
     public GameObject treasure;
     public int treasurePlayerId;
+    public Player player;
 
     private Color originalCellColor;
 
@@ -36,7 +37,7 @@ public class BoardCell : MonoBehaviour
     void OnMouseDown()
     {
         //Debug.Log("Clicked on cell " + rowIndex + "," + colIndex);
-        GameManager.Instance.onCellClick(this);
+        Board.Instance.onCellClick(this);
         if (specificRenderer != null) StartCoroutine(changeCellColor());
     }
 

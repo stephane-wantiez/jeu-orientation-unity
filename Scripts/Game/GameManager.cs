@@ -28,6 +28,7 @@ public class GameManager : MonoBehaviour
 
     void Start()
     {
+        Board.Instance.OnCellClickEvents += onCellClick;
         Invoke("startup", 0.1f);
     }
 
@@ -50,42 +51,20 @@ public class GameManager : MonoBehaviour
     {
         switch (_state)
         {
-            case GameState.GameConfiguration:
-                break;
             case GameState.BoardGeneration:
                 BoardGenerator.Instance.generateBoard();
                 ReperesManager.Instance.generateReperes();
                 State = GameState.PlacementTresors;
                 break;
-            case GameState.PlacementTresors:
-                break;
-            case GameState.PositionDepartPions:
-                break;
-            case GameState.Jeu:
-                break;
-            case GameState.Fin:
-                break;
-            default:
-                break;
         }
     }
 
-    public void onCellClick(BoardCell cell)
+    private void onCellClick(BoardCell cell)
     {
         switch (State)
         {
-            case GameState.BoardGeneration:
-                break;
             case GameState.PlacementTresors:
                 Tresors.Instance.placeTresorInCell(cell);
-                break;
-            case GameState.PositionDepartPions:
-                break;
-            case GameState.Jeu:
-                break;
-            case GameState.Fin:
-                break;
-            default:
                 break;
         }
     }

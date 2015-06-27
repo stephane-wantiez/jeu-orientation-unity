@@ -1,7 +1,4 @@
-﻿using System;
-using UnityEngine;
-
-public static class LocalizationUtils
+﻿public static class LocalizationUtils
 {
     public static string GetLocalizedMessage(string locKey, params object[] locParameters)
     {

@@ -1,16 +1,17 @@
 ﻿using UnityEngine;
-using System.Collections;
 
 public class Board : MonoBehaviour
 {
-    private static Board _instance;
-    public static Board Instance { get { return _instance; } }
+    public static Board Instance { get; private set; }
+
+    public delegate void OnCellClick(BoardCell cell);
+    public event OnCellClick OnCellClickEvents;
 
     private BoardGenerator generator;
 
     void Awake()
     {
-        _instance = this;
+        Instance = this;
         generator = GetComponent<BoardGenerator>();
     }
 
@@ -24,5 +25,10 @@ public class Board : MonoBehaviour
         int randomRowIndex = Random.Range(0, generator.nbRows);
         int randomColumnIndex = Random.Range(0, generator.nbColumns);
         return generator.getBoardCells()[randomRowIndex][randomColumnIndex];
+    }
+
+    public void onCellClick(BoardCell cell)
+    {
+        if (OnCellClickEvents != null) OnCellClickEvents(cell);
     }
 }

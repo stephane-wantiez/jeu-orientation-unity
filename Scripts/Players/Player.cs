@@ -1,14 +1,14 @@
-﻿using UnityEngine;
-using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using UnityEngine;
 
 public class Player
 {
     private const int MAX_DISTANCE = 5;
 
     public int id;
+    public int teamId;
 
-    public enum TurnState { DebutTour, LancementDeReperes, LancementDeDistance, LancementDeOrientation, ChoixChemin, Deplacement, FinTour }
+    public enum TurnState { DebutTour, LancementDeReperes, LancementDeDistance, LancementDeOrientation, ChoixPion, ChoixChemin, Deplacement, FinTour }
     private TurnState turnState;
 
     public float fixedPositionInZ;
@@ -16,13 +16,15 @@ public class Player
 
     public BoardCell currentCell;
     public Vector3 currentPosition;
-    public List<Vector2> movePositions;
+    public HashSet<BoardCell> moveCells = new HashSet<BoardCell>();
     
     public RepereType targetRepere1;
     public RepereType targetRepere2;
     public bool targetRepere1IsTreasure;
     public Orientation targetOrientation;
     public int targetDistance;
+
+    public Player selectedPlayer;
 
     private void setTurnState(TurnState newTurnState)
     {
@@ -78,17 +80,10 @@ public class Player
 
     private void launchDiceReperes()
     {
-        int repereRandomIndex = UnityEngine.Random.Range(0, RepereType.NB_TYPE_TOUS);
+        int repereRandomIndex = Random.Range(0, RepereType.NB_TYPE_TOUS);
         bool repereRegulier = repereRandomIndex < RepereType.NB_TYPE_REGULIER;
 
-        if (repereRegulier)
-        {
-            targetRepere1 = ReperesManager.Instance.getRepereTypeWithIndex(repereRandomIndex);
-        }
-        else
-        {
-            targetRepere1 = null;
-        }
+        targetRepere1 = repereRegulier ? ReperesManager.Instance.getRepereTypeWithIndex(repereRandomIndex) : null;
 
         if (RepereType.getTypeForCurrentGame() == RepereType.TypeEnum.Couleur)
         {
@@ -129,7 +124,7 @@ public class Player
                 targetRepere1IsTreasure = repereType1 == RepereType.TypePointCardinal.Special;
             }
 
-            repereRandomIndex = UnityEngine.Random.Range(0, RepereType.NB_TYPE_TOUS);
+            repereRandomIndex = Random.Range(0, RepereType.NB_TYPE_TOUS);
             repereRegulier = repereRandomIndex < RepereType.NB_TYPE_REGULIER;
 
             if (repereRegulier)
@@ -184,14 +179,7 @@ public class Player
 
     private void onDiceDistanceDone()
     {
-        if (GameManager.Instance.checkOrientation)
-        {
-            setTurnState(TurnState.LancementDeOrientation);
-        }
-        else
-        {
-            setTurnState(TurnState.ChoixChemin);
-        }
+        setTurnState(GameManager.Instance.checkOrientation ? TurnState.LancementDeOrientation : TurnState.ChoixPion);
     }
 
     private void launchDiceForOrientation()
@@ -209,7 +197,22 @@ public class Player
 
     private void onDiceOrientationDone()
     {
-        setTurnState(TurnState.ChoixChemin);
+        setTurnState(TurnState.ChoixPion);
+    }
+
+    private void getDirectionToTarget(RepereType repere, out PathChecker.PathDirection direction)
+    {
+        if (repere == ReperesManager.Instance.repereBas) direction = PathChecker.PathDirection.Down;
+        else if (repere == ReperesManager.Instance.repereHaut) direction = PathChecker.PathDirection.Up;
+        else if (repere == ReperesManager.Instance.repereGauche) direction = PathChecker.PathDirection.Left;
+        else direction = PathChecker.PathDirection.Right;
+    }
+
+    public void getDirectionsToTargets(out PathChecker.PathDirection direction1, out PathChecker.PathDirection direction2)
+    {
+        getDirectionToTarget(targetRepere1, out direction1);
+        if (targetRepere2 == null) direction2 = direction1;
+        else getDirectionToTarget(targetRepere2, out direction2);
     }
 
     private void onStateChange()
@@ -230,16 +233,43 @@ public class Player
             case TurnState.LancementDeOrientation:
                 launchDiceForOrientation();
                 break;
+            case TurnState.ChoixPion:
+                break;
             case TurnState.ChoixChemin:
+                moveCells.Clear();
                 break;
             case TurnState.Deplacement:
+                // TODO
                 break;
             case TurnState.FinTour:
                 playerIcon.setAsWaiting();
                 DicesManager.Instance.hideDices();
                 break;
-            default:
+        }
+    }
+
+    public void onCellClick(BoardCell cell)
+    {
+        switch (turnState)
+        {
+            case TurnState.ChoixPion:
+                if (cell.player == null) return;
+                if (cell.player.teamId != teamId) return;
+                selectedPlayer = cell.player;
+                setTurnState(TurnState.ChoixChemin);
                 break;
+            case TurnState.ChoixChemin:
+                moveCells.Add(cell);
+                checkMove();
+                break;
+        }
+    }
+
+    private void checkMove()
+    {
+        if (GameManager.Instance.gameType == GameManager.GameType.Simple)
+        {
+            // TODO
         }
     }
 }

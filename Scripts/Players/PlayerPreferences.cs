@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Xml;
-using System.Xml.Serialization;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class PlayerPreferences
 {
@@ -14,11 +8,7 @@ public class PlayerPreferences
 
     public static PlayerPreferences Instance
     {
-        get
-        {
-            if (_instance == null) _instance = new PlayerPreferences();
-            return _instance;
-        }
+        get { return _instance ?? (_instance = new PlayerPreferences()); }
     }
 
     private PlayerPreferences()
@@ -31,7 +21,7 @@ public class PlayerPreferences
 
     public LanguageManager.Language getLanguage()
     {
-        int defLang = (int)LanguageManager.DEFAULT_LANG;
+        const int defLang = (int)LanguageManager.DEFAULT_LANG;
         int lang = PlayerPrefs.GetInt(PREFS_LANG, defLang);
         return LanguageManager.getLanguageForValue(lang);
     }

@@ -1,7 +1,6 @@
-﻿using UnityEngine;
-using System;
-using System.Collections;
+﻿using swantiez.unity.tools.utils;
 using System.Collections.Generic;
+using UnityEngine;
 
 public class ReperesManager : MonoBehaviour
 {
@@ -10,18 +9,18 @@ public class ReperesManager : MonoBehaviour
 
     public RepereType[] typesReperes;
 
-    private Dictionary<RepereType.TypeCouleur, RepereType> reperesPerColor = new Dictionary<RepereType.TypeCouleur, RepereType>();
-    private Dictionary<RepereType.TypePointCardinal, RepereType> reperesPerCard = new Dictionary<RepereType.TypePointCardinal, RepereType>();
+    private readonly Dictionary<RepereType.TypeCouleur, RepereType> reperesPerColor = new Dictionary<RepereType.TypeCouleur, RepereType>();
+    private readonly Dictionary<RepereType.TypePointCardinal, RepereType> reperesPerCard = new Dictionary<RepereType.TypePointCardinal, RepereType>();
 
     public Transform repereHautPosition;
     public Transform repereDroitePosition;
     public Transform repereBasPosition;
     public Transform repereGauchePosition;
 
-    private RepereType repereHaut;
-    private RepereType repereDroite;
-    private RepereType repereBas;
-    private RepereType repereGauche;
+    public RepereType repereHaut;
+    public RepereType repereDroite;
+    public RepereType repereBas;
+    public RepereType repereGauche;
 
     void Awake()
     {
@@ -57,7 +56,7 @@ public class ReperesManager : MonoBehaviour
         {
             colors[i] = (RepereType.TypeCouleur)i;
         }
-        Utils.ShuffleFY(colors);
+        colors.ShuffleFY();
 
         repereHaut   = reperesPerColor[colors[0]];
         repereDroite = reperesPerColor[colors[1]];
@@ -93,16 +92,16 @@ public class ReperesManager : MonoBehaviour
     private void generateRepere(RepereType repereType, Transform reperePosition)
     {
         Quaternion repereRotation = reperePosition.rotation;
-        GameObject repereObject = Instantiate(repereType.gameObject, reperePosition.position, repereRotation) as GameObject;
+        GameObject repereObject = (GameObject) Instantiate(repereType.gameObject, reperePosition.position, repereRotation);
         repereObject.transform.parent = reperePosition;
     }
 
     private void clearReperesParents()
     {
-        Utils.DeleteChildrenOfTransform(repereHautPosition, DestroyImmediate);
-        Utils.DeleteChildrenOfTransform(repereDroitePosition, DestroyImmediate);
-        Utils.DeleteChildrenOfTransform(repereBasPosition, DestroyImmediate);
-        Utils.DeleteChildrenOfTransform(repereGauchePosition, DestroyImmediate);
+        repereHautPosition.DestroyAllChildren(false);
+        repereDroitePosition.DestroyAllChildren(false);
+        repereBasPosition.DestroyAllChildren(false);
+        repereGauchePosition.DestroyAllChildren(false);
     }
 
     public void generateReperes()

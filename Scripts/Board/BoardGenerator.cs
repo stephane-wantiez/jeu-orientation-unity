@@ -1,6 +1,6 @@
-﻿using UnityEngine;
-using System.Collections;
-using System.Collections.Generic;
+﻿using swantiez.unity.tools.camera;
+using swantiez.unity.tools.utils;
+using UnityEngine;
 
 public class BoardGenerator : MonoBehaviour
 {
@@ -9,8 +9,7 @@ public class BoardGenerator : MonoBehaviour
     public const int BOARD_MIN_NB_COLS = 10;
     public const int BOARD_MAX_NB_COLS = 20;
 
-    private static BoardGenerator _instance;
-    public static BoardGenerator Instance { get { return _instance; } }
+    public static BoardGenerator Instance { get; private set; }
 
     public enum IndexType { Letter, Number }
 
@@ -52,7 +51,7 @@ public class BoardGenerator : MonoBehaviour
 
     void Awake()
     {
-        _instance = this;
+        Instance = this;
         initialize();
     }
 
@@ -86,6 +85,7 @@ public class BoardGenerator : MonoBehaviour
     private void generateBoardLabelAt(Vector3 position, string labelStr, Transform labelParent)
     {
         GameObject labelObject = Instantiate(labelPrefab.gameObject, position, Quaternion.identity) as GameObject;
+        if (labelObject == null) return;
         labelObject.transform.parent = labelParent;
         EasyFontTextMesh label = labelObject.GetComponent<EasyFontTextMesh>();
         label.Text = labelStr;
@@ -154,6 +154,7 @@ public class BoardGenerator : MonoBehaviour
     {
         Vector3 centerPos = startPos + (endPos - startPos) / 2;
         GameObject line = Instantiate(vertical ? verticalLinePrefab.gameObject : horizontalLinePrefab.gameObject, centerPos, Quaternion.identity) as GameObject;
+        if (line == null) return;
         line.transform.localScale = vertical ? verticalLineScale : horizontalLineScale;
         line.transform.parent = lineParent;
     }
@@ -211,6 +212,7 @@ public class BoardGenerator : MonoBehaviour
         cellPosition.y -= (rowIndex+1.5f) * spaceBetweenRows;
 
         GameObject boardCellObject = Instantiate(boardCellPrefab.gameObject, cellPosition, Quaternion.identity) as GameObject;
+        if (boardCellObject == null) return;
         boardCellObject.transform.parent = boardCellsParent;
         boardCellObject.transform.localScale = boardCellScale;
         boardCellObject.name = "Board cell " + rowIndex + "," + colIndex;
@@ -238,10 +240,9 @@ public class BoardGenerator : MonoBehaviour
 
     public void resetBoard()
     {
-        Utils.DeleteChildrenOfTransform(labelsParent, DestroyImmediate);
-        Utils.DeleteChildrenOfTransform(linesParent, DestroyImmediate);
-        Utils.DeleteChildrenOfTransform(boardCellsParent, DestroyImmediate);
-
+        labelsParent.DestroyAllChildren(false);
+        linesParent.DestroyAllChildren(false);
+        boardCellsParent.DestroyAllChildren(false);
         boardGenerated = false;
     }
 

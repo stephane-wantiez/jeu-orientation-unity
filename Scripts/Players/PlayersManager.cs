@@ -1,8 +1,7 @@
-﻿using UnityEngine;
+﻿using swantiez.unity.tools.utils;
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
+using UnityEngine;
 
 public class PlayersManager : MonoBehaviour
 {
@@ -11,8 +10,7 @@ public class PlayersManager : MonoBehaviour
     public const string LOCKEY_PLAYER_TURN_START = "player_turn";
     public const string LOCKEY_PLAYER_STARTUP_POS = "startup_player_position";
 
-    private static PlayersManager _instance;
-    public static PlayersManager Instance { get { return _instance; } }
+    public static PlayersManager Instance { get; private set; }
 
     [Range(NB_PLAYERS_MIN, NB_PLAYERS_MAX)]
     public int nbPlayers;
@@ -27,11 +25,12 @@ public class PlayersManager : MonoBehaviour
     [HideInInspector]
     public int currentPlayerIndex;
 
-    private List<PlayerIcon> availablePlayerIcons = new List<PlayerIcon>();
+    private readonly List<PlayerIcon> availablePlayerIcons = new List<PlayerIcon>();
+    private bool gameOngoing;
 
     void Awake()
     {
-        _instance = this;
+        Instance = this;
         resetPlayersUI();
         initPlayersIcons();
         initializePlayers(); // TEMPORARY
@@ -40,6 +39,7 @@ public class PlayersManager : MonoBehaviour
     void Start()
     {
         GameManager.Instance.OnGameStateChangeEvents += onGameStateChange;
+        Board.Instance.OnCellClickEvents += onCellClick;
     }
 
     private void initPlayersIcons()
@@ -57,7 +57,7 @@ public class PlayersManager : MonoBehaviour
                 {
                     Array.ForEach(validPlayersIcons, p => availablePlayerIcons.Add(p));
                 }
-                Utils.ShuffleFY(availablePlayerIcons);
+                availablePlayerIcons.ShuffleFY();
             }
             else
             {
@@ -92,13 +92,18 @@ public class PlayersManager : MonoBehaviour
 
         for (int i = 0; i < nbPlayers; ++i)
         {
-            Player player = new Player();
-            player.id = i + 1;
-            player.fixedPositionInZ = playerFixedPositionInZ;
-            player.playerIcon = availablePlayerIcons[0];
+            Player player = new Player
+            {
+                id = i + 1,
+                fixedPositionInZ = playerFixedPositionInZ,
+                playerIcon = availablePlayerIcons[0]
+            };
             GameObject playerIconObject = Instantiate(player.playerIcon.gameObject) as GameObject;
-            player.playerIcon = playerIconObject.GetComponent<PlayerIcon>();
-            player.playerIcon.transform.parent = playersParent;
+            if (playerIconObject)
+            {
+                player.playerIcon = playerIconObject.GetComponent<PlayerIcon>();
+                player.playerIcon.transform.parent = playersParent;
+            }
             availablePlayerIcons.RemoveAt(0);
             players[i] = player;
             playersUI[i].gameObject.SetActive(true);
@@ -199,6 +204,7 @@ public class PlayersManager : MonoBehaviour
     private void onGameStateChange(GameManager.GameState newState)
     {
         currentPlayerIndex = 0;
+        gameOngoing = newState == GameManager.GameState.Jeu;
 
         switch (newState)
         {
@@ -213,8 +219,12 @@ public class PlayersManager : MonoBehaviour
                 break;
             case GameManager.GameState.Fin:
                 break;
-            default:
-                break;
         }
+    }
+
+    private void onCellClick(BoardCell cell)
+    {
+        if (!gameOngoing) return;
+        players[currentPlayerIndex].onCellClick(cell);
     }
 }
