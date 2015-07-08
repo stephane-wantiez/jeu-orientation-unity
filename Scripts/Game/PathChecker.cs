@@ -7,73 +7,88 @@ public class PathChecker : MonoBehaviour
     public static PathChecker Instance { get; private set; }
 
     public enum PathDirection { Left, Right, Up, Down }
+    private enum CellType { Invalid, ValidMiddle, ValidEnd }
 
     void Awake()
     {
         Instance = this;
     }
 
-    private bool hasSelectedCellAt(int rowIndex, int colIndex, Player player)
+    private bool hasValidPathDistance(Player player, PlayerPiece piece)
     {
-        return player.moveCells.Count(c => c.rowIndex == rowIndex && c.colIndex == colIndex) != 0;
+        return piece.moveCells.Count == player.targetDistance;
     }
 
-    private bool isSelectedPlayerAt(int rowIndex, int colIndex, Player player)
+    private bool hasSelectedCellAt(int rowIndex, int colIndex, PlayerPiece piece)
     {
-        return ((player.selectedPlayer.currentCell.rowIndex == rowIndex) &&
-                (player.selectedPlayer.currentCell.colIndex == colIndex));
+        return piece.moveCells.Count(c => c.rowIndex == rowIndex && c.colIndex == colIndex) != 0;
     }
 
-    private void checkAdjacentCell(int checkedRowIndex, int checkedColIndex, Player player, ref bool adjacentToPlayer, ref int nbAdjacentCells)
+    private bool isPieceAt(int rowIndex, int colIndex, PlayerPiece piece)
     {
-        if (isSelectedPlayerAt(checkedRowIndex, checkedColIndex, player))
+        return ((piece.currentCell.rowIndex == rowIndex) &&
+                (piece.currentCell.colIndex == colIndex));
+    }
+
+    private void checkAdjacentCell(int checkedRowIndex, int checkedColIndex, PlayerPiece piece, ref bool adjacentToPiece, ref int nbAdjacentCells)
+    {
+        if (isPieceAt(checkedRowIndex, checkedColIndex, piece))
         {
-            adjacentToPlayer = true;
+            adjacentToPiece = true;
         }
-        else if (hasSelectedCellAt(checkedRowIndex, checkedColIndex, player))
+        else if (hasSelectedCellAt(checkedRowIndex, checkedColIndex, piece))
         {
             ++nbAdjacentCells;
         }
     }
 
-    private int getNbAdjacentCells(BoardCell cell, Player player, ref bool adjacentToPlayer)
+    private int getNbAdjacentCells(BoardCell cell, PlayerPiece piece, ref bool adjacentToPiece)
     {
         int nbAdjacentCells = 0;
-        if (cell.rowIndex != 0) checkAdjacentCell(cell.rowIndex - 1, cell.colIndex, player, ref adjacentToPlayer, ref nbAdjacentCells);
-        if (cell.rowIndex != getMaxRowIndex()) checkAdjacentCell(cell.rowIndex + 1, cell.colIndex, player, ref adjacentToPlayer, ref nbAdjacentCells);
-        if (cell.colIndex != 0) checkAdjacentCell(cell.rowIndex, cell.colIndex - 1, player, ref adjacentToPlayer, ref nbAdjacentCells);
-        if (cell.colIndex != getMaxColumnIndex()) checkAdjacentCell(cell.rowIndex, cell.colIndex + 1, player, ref adjacentToPlayer, ref nbAdjacentCells);
+        if (cell.rowIndex != 0) checkAdjacentCell(cell.rowIndex - 1, cell.colIndex, piece, ref adjacentToPiece, ref nbAdjacentCells);
+        if (cell.rowIndex != getMaxRowIndex()) checkAdjacentCell(cell.rowIndex + 1, cell.colIndex, piece, ref adjacentToPiece, ref nbAdjacentCells);
+        if (cell.colIndex != 0) checkAdjacentCell(cell.rowIndex, cell.colIndex - 1, piece, ref adjacentToPiece, ref nbAdjacentCells);
+        if (cell.colIndex != getMaxColumnIndex()) checkAdjacentCell(cell.rowIndex, cell.colIndex + 1, piece, ref adjacentToPiece, ref nbAdjacentCells);
         return nbAdjacentCells;
     }
 
-    private bool hasValidPathDistance(Player player)
+    private CellType getCellType(PlayerPiece piece, BoardCell cell, int nbAdjacentCells)
     {
-        return player.moveCells.Count == player.targetDistance;
-    }
-
-    private bool isCellValidInPath(Player player, BoardCell cell, int nbAdjacentCells, bool adjacentToPlayer, ref int nbEndPath)
-    {
-        if (nbAdjacentCells > 2) return false;
-        if (nbAdjacentCells == 2) return adjacentToPlayer;
-        if (nbAdjacentCells == 0) return false;
+        if ((nbAdjacentCells == 0) || (nbAdjacentCells > 2)) return CellType.Invalid;
+        if (nbAdjacentCells == 2) return CellType.ValidMiddle;
         // nbAdjacentCells == 1
-        if (nbEndPath == 2) return false;
-        ++nbEndPath;
-        return true;
+        return CellType.ValidEnd;
     }
 
-    private bool hasValidCoherentPath(Player player)
+    private bool hasValidCoherentPath(PlayerPiece piece)
     {
         int nbEndPath = 0;
+        bool adjacentToPieceTreated = false;
 
-        foreach (BoardCell cell in player.moveCells)
+        foreach (BoardCell cell in piece.moveCells)
         {
-            bool adjacentToPlayer = false;
-            int nbAdjacentCells = getNbAdjacentCells(cell, player, ref adjacentToPlayer);
-            bool valid = isCellValidInPath(player, cell, nbAdjacentCells, adjacentToPlayer, ref nbEndPath);
-            if (!valid) return false;
+            bool adjacentToPiece = false;
+            int nbAdjacentCells = getNbAdjacentCells(cell, piece, ref adjacentToPiece);
+            CellType cellType = getCellType(piece, cell, nbAdjacentCells);
+
+            if (cellType == CellType.Invalid)
+            {
+                return false;
+            }
+            else if (cellType == CellType.ValidEnd)
+            {
+                ++nbEndPath;
+                if (nbEndPath > 2) return false;
+                
+                if (adjacentToPiece)
+                {
+                    if (adjacentToPieceTreated) return false;
+                    adjacentToPieceTreated = true;
+                }
+            }
         }
-        return true;
+
+        return adjacentToPieceTreated;
     }
 
     private static int getMaxRowIndex()
@@ -113,10 +128,10 @@ public class PathChecker : MonoBehaviour
         return updateIndexForPathDirection(ref colIndex, getMaxColumnIndex(), direction, PathDirection.Up, PathDirection.Down);
     }
 
-    private bool hasValidPathDirection(Player player, PathDirection direction1, PathDirection direction2)
+    private bool hasValidPathDirection(PlayerPiece piece, PathDirection direction1, PathDirection direction2)
     {
-        int rowIndex = player.selectedPlayer.currentCell.rowIndex;
-        int columnIndex = player.selectedPlayer.currentCell.colIndex;
+        int rowIndex = piece.currentCell.rowIndex;
+        int columnIndex = piece.currentCell.colIndex;
         PathDirection currentDirection = direction1;
         int nbMaxDirChanges = direction1 == direction2 ? 0 : 1;
         int nbDirectionChanges = 0;
@@ -137,18 +152,18 @@ public class PathChecker : MonoBehaviour
             }
             else
             {
-                bool cellSelected = hasSelectedCellAt(rowIndex, columnIndex, player);
+                bool cellSelected = hasSelectedCellAt(rowIndex, columnIndex, piece);
                 if (!cellSelected) return false;
             }
         }
     }
 
-    public bool isPathValidForPlayer(Player player)
+    public bool isPathValidForPlayerPiece(Player player, PlayerPiece piece)
     {
-        if (!hasValidPathDistance(player)) return false;
-        if (!hasValidCoherentPath(player)) return false;
+        if (!hasValidPathDistance(player, piece)) return false;
+        if (!hasValidCoherentPath(piece)) return false;
         PathDirection direction1ToTarget, direction2ToTarget;
         player.getDirectionsToTargets(out direction1ToTarget, out direction2ToTarget);
-        return hasValidPathDirection(player, direction1ToTarget, direction2ToTarget);
+        return hasValidPathDirection(piece, direction1ToTarget, direction2ToTarget) || hasValidPathDirection(piece, direction2ToTarget, direction1ToTarget);
     }
 }

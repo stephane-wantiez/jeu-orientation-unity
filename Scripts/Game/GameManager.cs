@@ -12,7 +12,7 @@ public class GameManager : MonoBehaviour
     public GameType gameType;
     public bool checkOrientation;
 
-    public enum GameState { GameConfiguration, BoardGeneration, PlacementTresors, PositionDepartPions, Jeu, Fin }
+    public enum GameState { GameConfiguration, BoardGeneration, PlaceTreasures, ChoosePieceStartup, Game, GameOver }
     private GameState _state;
     public GameState State { get { return _state; } set { updateState(value, false); } }
 
@@ -54,7 +54,7 @@ public class GameManager : MonoBehaviour
             case GameState.BoardGeneration:
                 BoardGenerator.Instance.generateBoard();
                 ReperesManager.Instance.generateReperes();
-                State = GameState.PlacementTresors;
+                State = GameState.PlaceTreasures;
                 break;
         }
     }
@@ -63,7 +63,7 @@ public class GameManager : MonoBehaviour
     {
         switch (State)
         {
-            case GameState.PlacementTresors:
+            case GameState.PlaceTreasures:
                 Tresors.Instance.placeTresorInCell(cell);
                 break;
         }

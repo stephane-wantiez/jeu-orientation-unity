@@ -22,7 +22,7 @@ public class PlayerUI : MonoBehaviour
         if (player != null)
         {
             playerIdLabel.text = Localization.Get(PLAYER_ID_LABEL_LOCKEY);
-            playerIdLabel.text = string.Format(playerIdLabel.text, player.id);
+            playerIdLabel.text = string.Format(playerIdLabel.text, player.id + 1);
         }
     }
 

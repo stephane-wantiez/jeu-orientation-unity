@@ -5,21 +5,29 @@ using UnityEngine;
 
 public class PlayersManager : MonoBehaviour
 {
-    public const int NB_PLAYERS_MIN = 2;
+    public const int NB_PLAYERS_MIN = 1;
     public const int NB_PLAYERS_MAX = 5;
+    public const int NB_TEAMS_MIN = 1;
+    public const int NB_TEAMS_MAX = 3;
     public const string LOCKEY_PLAYER_TURN_START = "player_turn";
     public const string LOCKEY_PLAYER_STARTUP_POS = "startup_player_position";
 
     public static PlayersManager Instance { get; private set; }
 
+    [Range(NB_TEAMS_MIN, NB_TEAMS_MAX)]
+    public int nbTeams;
     [Range(NB_PLAYERS_MIN, NB_PLAYERS_MAX)]
-    public int nbPlayers;
+    public int nbPlayersPerTeam;
     public float playerFixedPositionInZ;
 
     public PlayerUI[] playersUI;
     public PlayerIcon[] playersIcons;
     public Transform playersParent;
 
+    public UIPanel changePiecePanel;
+
+    [HideInInspector]
+    public PlayersTeam[] teams;
     [HideInInspector]
     public Player[] players;
     [HideInInspector]
@@ -27,19 +35,25 @@ public class PlayersManager : MonoBehaviour
 
     private readonly List<PlayerIcon> availablePlayerIcons = new List<PlayerIcon>();
     private bool gameOngoing;
+    private int playerCounter;
 
     void Awake()
     {
         Instance = this;
         resetPlayersUI();
         initPlayersIcons();
-        initializePlayers(); // TEMPORARY
+        initializeTeams(); // TEMPORARY
     }
 
     void Start()
     {
         GameManager.Instance.OnGameStateChangeEvents += onGameStateChange;
         Board.Instance.OnCellClickEvents += onCellClick;
+    }
+
+    private int getNbPlayers()
+    {
+        return nbTeams * nbPlayersPerTeam;
     }
 
     private void initPlayersIcons()
@@ -51,9 +65,9 @@ public class PlayersManager : MonoBehaviour
 
             if (validPlayersIcons.Length != 0)
             {
-                if (validPlayersIcons.Length < nbPlayers) Debug.LogWarning("There are less " + (checkOrientation ? "oriented" : "non oriented") + " player icons available than players");
+                if (validPlayersIcons.Length < getNbPlayers()) Debug.LogWarning("There are less " + (checkOrientation ? "oriented" : "non oriented") + " player icons available than players");
 
-                while (availablePlayerIcons.Count < nbPlayers)
+                while (availablePlayerIcons.Count < getNbPlayers())
                 {
                     Array.ForEach(validPlayersIcons, p => availablePlayerIcons.Add(p));
                 }
@@ -80,34 +94,54 @@ public class PlayersManager : MonoBehaviour
 
     private void updateUIForCurrentPlayer()
     {
-        for (int i = 0; i < nbPlayers; ++i)
+        for (int i = 0; i < getNbPlayers(); ++i)
         {
             playersUI[i].onPlayerTurn(i == currentPlayerIndex);
         }
+
+        bool canChangePiece = getCurrentPlayer().team.canChangePiece();
+        changePiecePanel.gameObject.SetActive(canChangePiece);
     }
 
-    public void initializePlayers()
+    public void initializeTeams()
     {
-        players = new Player[nbPlayers];
+        playerCounter = 0;
+        players = new Player[getNbPlayers()];
+        teams = new PlayersTeam[nbTeams];
 
-        for (int i = 0; i < nbPlayers; ++i)
+        for (int i = 0; i < nbTeams; ++i)
         {
-            Player player = new Player
-            {
-                id = i + 1,
-                fixedPositionInZ = playerFixedPositionInZ,
-                playerIcon = availablePlayerIcons[0]
-            };
-            GameObject playerIconObject = Instantiate(player.playerIcon.gameObject) as GameObject;
+            PlayersTeam team = new PlayersTeam();
+            team.teamId = i;
+            teams[i] = team;
+            initializeTeamPlayers(team);
+        }
+    }
+
+    public void initializeTeamPlayers(PlayersTeam team)
+    {
+        team.players = new Player[nbPlayersPerTeam];
+
+        for (int i = 0; i < nbPlayersPerTeam; ++i)
+        {
+            Player player = new Player();
+            player.piece = new PlayerPiece();
+            player.piece.player = player;
+            player.id = playerCounter++;
+            player.team = team;
+            player.piece.fixedPositionInZ = playerFixedPositionInZ;
+            player.piece.playerIcon = availablePlayerIcons[0];
+            GameObject playerIconObject = Instantiate(player.piece.playerIcon.gameObject) as GameObject;
             if (playerIconObject)
             {
-                player.playerIcon = playerIconObject.GetComponent<PlayerIcon>();
-                player.playerIcon.transform.parent = playersParent;
+                player.piece.playerIcon = playerIconObject.GetComponent<PlayerIcon>();
+                player.piece.playerIcon.transform.parent = playersParent;
             }
             availablePlayerIcons.RemoveAt(0);
-            players[i] = player;
-            playersUI[i].gameObject.SetActive(true);
-            playersUI[i].initializeWithPlayer(player);
+            team.players[i] = player;
+            players[player.id] = player;
+            playersUI[player.id].gameObject.SetActive(true);
+            playersUI[player.id].initializeWithPlayer(player);
         }
     }
 
@@ -119,13 +153,13 @@ public class PlayersManager : MonoBehaviour
     public void onPlacementTresorDoneForPlayer()
     {
         ++currentPlayerIndex;
-        if (currentPlayerIndex != nbPlayers)
+        if (currentPlayerIndex != getNbPlayers())
         {
             Tresors.Instance.startTresorPlacementForPlayer(currentPlayerIndex);
         }
         else
         {
-            GameManager.Instance.State = GameManager.GameState.PositionDepartPions;
+            GameManager.Instance.State = GameManager.GameState.ChoosePieceStartup;
         }
     }
 
@@ -136,9 +170,9 @@ public class PlayersManager : MonoBehaviour
         while (!cellFound)
         {
             randomCell = Board.Instance.getRandomCell();
-            cellFound = (randomCell.treasure == null) && Array.TrueForAll(players, p => p.currentCell != randomCell);
+            cellFound = (randomCell.treasure == null) && Array.TrueForAll(players, p => p.piece.currentCell != randomCell);
         }
-        player.setCurrentCell(randomCell);
+        player.piece.setCurrentCell(randomCell);
     }
 
     private void chooseStartupPositionForCurrentPlayer()
@@ -150,27 +184,27 @@ public class PlayersManager : MonoBehaviour
 
     private void displayStartupPositionMessageForPlayer(Player player)
     {
-        player.playerIcon.setAsPlaying();
+        player.piece.setAsPlaying(true);
 
         LocalizedMessage startupPositionMessage = new LocalizedMessage( LOCKEY_PLAYER_STARTUP_POS,
                                                                         player.id + 1,
-                                                                        player.currentCell.getRowLabel(),
-                                                                        player.currentCell.getColumnLabel());
+                                                                        player.piece.currentCell.getRowLabel(),
+                                                                        player.piece.currentCell.getColumnLabel());
         PopupManager.Instance.showPopupWithMessage(startupPositionMessage, onStartupPositionMessageValidated);
     }
 
     public void onStartupPositionMessageValidated()
     {
-        players[currentPlayerIndex].playerIcon.setAsWaiting();
+        players[currentPlayerIndex].piece.setAsPlaying(false);
 
-        if (currentPlayerIndex != nbPlayers-1)
+        if (currentPlayerIndex != getNbPlayers() - 1)
         {
             ++currentPlayerIndex;
             chooseStartupPositionForCurrentPlayer();
         }
         else
         {
-            GameManager.Instance.State = GameManager.GameState.Jeu;
+            GameManager.Instance.State = GameManager.GameState.Game;
         }
     }
 
@@ -181,7 +215,7 @@ public class PlayersManager : MonoBehaviour
 
     public void startPlayerTurn()
     {
-        if (GameManager.Instance.State == GameManager.GameState.Jeu)
+        if (GameManager.Instance.State == GameManager.GameState.Game)
         {
             updateUIForCurrentPlayer();
             Player player = players[currentPlayerIndex];
@@ -196,28 +230,28 @@ public class PlayersManager : MonoBehaviour
 
     public void onPlayerTurnDone()
     {
-        players[currentPlayerIndex].onTurnDone();
-        currentPlayerIndex = (currentPlayerIndex + 1) % nbPlayers;
+        getCurrentPlayer().onTurnDone();
+        currentPlayerIndex = (currentPlayerIndex + 1) % getNbPlayers();
         startPlayerTurn();
     }
 
     private void onGameStateChange(GameManager.GameState newState)
     {
         currentPlayerIndex = 0;
-        gameOngoing = newState == GameManager.GameState.Jeu;
+        gameOngoing = newState == GameManager.GameState.Game;
 
         switch (newState)
         {
-            case GameManager.GameState.PlacementTresors:
+            case GameManager.GameState.PlaceTreasures:
                 Tresors.Instance.startTresorPlacementForPlayer(0);
                 break;
-            case GameManager.GameState.PositionDepartPions:
+            case GameManager.GameState.ChoosePieceStartup:
                 chooseStartupPositionForCurrentPlayer();
                 break;
-            case GameManager.GameState.Jeu:
+            case GameManager.GameState.Game:
                 startPlayerTurn();
                 break;
-            case GameManager.GameState.Fin:
+            case GameManager.GameState.GameOver:
                 break;
         }
     }
@@ -226,5 +260,10 @@ public class PlayersManager : MonoBehaviour
     {
         if (!gameOngoing) return;
         players[currentPlayerIndex].onCellClick(cell);
+    }
+
+    public void onChangePlayerPiece()
+    {
+        players[currentPlayerIndex].onChangePiece();
     }
 }

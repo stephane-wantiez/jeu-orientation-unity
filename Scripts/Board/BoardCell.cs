@@ -11,13 +11,13 @@ public class BoardCell : MonoBehaviour
     public Color clickColor;
     public GameObject treasure;
     public int treasurePlayerId;
-    public Player player;
+    public PlayerPiece piece;
 
     private Color originalCellColor;
 
     void Awake()
     {
-        if (specificRenderer == null) specificRenderer = renderer;
+        if (specificRenderer == null) specificRenderer = GetComponent<Renderer>();
         if (specificRenderer != null)
         {
             originalCellColor = specificRenderer.material.color;

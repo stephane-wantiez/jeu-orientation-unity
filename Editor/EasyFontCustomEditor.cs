@@ -35,7 +35,7 @@ public class EasyFontCustomEditor : Editor {
 		//Initialize shorting layer index
 		for (int i = 0; i< sortingLayersNames.Length ; i++)
 		{
-			if (sortingLayersNames[i] == customFont.renderer.sortingLayerName)
+			if (sortingLayersNames[i] == customFont.GetComponent<Renderer>().sortingLayerName)
 				popupSortingLayersIndex = i;
 		}
 
@@ -313,7 +313,7 @@ public class EasyFontCustomEditor : Editor {
 		
 		if (GUILayout.Button("Destroy Text component",buttonStyleRed))
 		{
-			Renderer tempRenderer = customFont.gameObject.renderer;
+			Renderer tempRenderer = customFont.gameObject.GetComponent<Renderer>();
 			MeshFilter	tempMeshFilter = customFont.GetComponent<MeshFilter>();
 			DestroyImmediate(customFont);
 			DestroyImmediate(tempRenderer);
@@ -325,10 +325,10 @@ public class EasyFontCustomEditor : Editor {
 
 		textColor.normal.textColor = Color.green;
 		EditorGUILayout.LabelField (string.Format("Vertex count {0}", customFont.GetVertexCount().ToString()),textColor);
-		if (customFont.renderer.sharedMaterial != null)
+		if (customFont.GetComponent<Renderer>().sharedMaterial != null)
 		{
-			if (customFont.renderer.sharedMaterial.mainTexture != null)
-				EditorGUILayout.LabelField (string.Format("Font Texture Size {0} x {1}", customFont.renderer.sharedMaterial.mainTexture.width.ToString(),customFont.renderer.sharedMaterial.mainTexture.height.ToString()),textColor);
+			if (customFont.GetComponent<Renderer>().sharedMaterial.mainTexture != null)
+				EditorGUILayout.LabelField (string.Format("Font Texture Size {0} x {1}", customFont.GetComponent<Renderer>().sharedMaterial.mainTexture.width.ToString(),customFont.GetComponent<Renderer>().sharedMaterial.mainTexture.height.ToString()),textColor);
 			else
 			{
 				textColor.normal.textColor = Color.red;

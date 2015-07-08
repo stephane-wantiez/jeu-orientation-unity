@@ -6,25 +6,18 @@ public class Player
     private const int MAX_DISTANCE = 5;
 
     public int id;
-    public int teamId;
+    public PlayersTeam team;
 
-    public enum TurnState { DebutTour, LancementDeReperes, LancementDeDistance, LancementDeOrientation, ChoixPion, ChoixChemin, Deplacement, FinTour }
+    public enum TurnState { DebutTour, LancementDeReperes, LancementDeDistance, LancementDeOrientation, ChoixChemin, Deplacement, FinTour }
     private TurnState turnState;
 
-    public float fixedPositionInZ;
-    public PlayerIcon playerIcon;
-
-    public BoardCell currentCell;
-    public Vector3 currentPosition;
-    public HashSet<BoardCell> moveCells = new HashSet<BoardCell>();
+    public PlayerPiece piece;
     
     public RepereType targetRepere1;
     public RepereType targetRepere2;
     public bool targetRepere1IsTreasure;
     public Orientation targetOrientation;
     public int targetDistance;
-
-    public Player selectedPlayer;
 
     private void setTurnState(TurnState newTurnState)
     {
@@ -45,19 +38,6 @@ public class Player
     public void onTurnDone()
     {
         setTurnState(TurnState.FinTour);
-    }
-
-    private void updateIconPosition()
-    {
-        currentPosition.z = fixedPositionInZ;
-        playerIcon.transform.position = currentPosition;
-    }
-
-    public void setCurrentCell(BoardCell cell)
-    {
-        currentCell = cell;
-        currentPosition = cell.transform.position;
-        updateIconPosition();
     }
 
     private void checkDiceReperes()
@@ -179,7 +159,7 @@ public class Player
 
     private void onDiceDistanceDone()
     {
-        setTurnState(GameManager.Instance.checkOrientation ? TurnState.LancementDeOrientation : TurnState.ChoixPion);
+        setTurnState(GameManager.Instance.checkOrientation ? TurnState.LancementDeOrientation : TurnState.ChoixChemin);
     }
 
     private void launchDiceForOrientation()
@@ -197,7 +177,7 @@ public class Player
 
     private void onDiceOrientationDone()
     {
-        setTurnState(TurnState.ChoixPion);
+        setTurnState(TurnState.ChoixChemin);
     }
 
     private void getDirectionToTarget(RepereType repere, out PathChecker.PathDirection direction)
@@ -217,10 +197,13 @@ public class Player
 
     private void onStateChange()
     {
+        PlayerPiece currentPiece = team.getActivePiece();
+
         switch (turnState)
         {
             case TurnState.DebutTour:
-                playerIcon.setAsPlaying();
+                team.onPlayerActive(this);
+                currentPiece = team.getActivePiece();
                 DicesManager.Instance.showDices();
                 setTurnState(TurnState.LancementDeReperes);
                 break;
@@ -233,43 +216,44 @@ public class Player
             case TurnState.LancementDeOrientation:
                 launchDiceForOrientation();
                 break;
-            case TurnState.ChoixPion:
-                break;
             case TurnState.ChoixChemin:
-                moveCells.Clear();
+                if (currentPiece != null) currentPiece.moveCells.Clear();
                 break;
             case TurnState.Deplacement:
                 // TODO
                 break;
             case TurnState.FinTour:
-                playerIcon.setAsWaiting();
+                if (currentPiece != null) currentPiece.setAsPlaying(false);
                 DicesManager.Instance.hideDices();
                 break;
         }
     }
 
+    public void onChangePiece()
+    {
+        team.changePiece();
+    }
+
     public void onCellClick(BoardCell cell)
     {
-        switch (turnState)
+        if (turnState != TurnState.ChoixChemin) return;
+        PlayerPiece currentPiece = team.getActivePiece();
+        if (currentPiece != null)
         {
-            case TurnState.ChoixPion:
-                if (cell.player == null) return;
-                if (cell.player.teamId != teamId) return;
-                selectedPlayer = cell.player;
-                setTurnState(TurnState.ChoixChemin);
-                break;
-            case TurnState.ChoixChemin:
-                moveCells.Add(cell);
-                checkMove();
-                break;
+            currentPiece.onCellClick(cell);
+            checkMove(currentPiece);
         }
     }
 
-    private void checkMove()
+    private void checkMove(PlayerPiece currentPiece)
     {
         if (GameManager.Instance.gameType == GameManager.GameType.Simple)
         {
-            // TODO
+            bool pathValid = PathChecker.Instance.isPathValidForPlayerPiece(this, currentPiece);
+            if (pathValid)
+            {
+                Debug.Log("PATH VALID");
+            }
         }
     }
 }
