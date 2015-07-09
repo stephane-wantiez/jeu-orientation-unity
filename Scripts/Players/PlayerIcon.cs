@@ -1,4 +1,7 @@
-﻿using UnityEngine;
+﻿using System;
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
 
 public class PlayerIcon : MonoBehaviour
 {
@@ -24,4 +27,16 @@ public class PlayerIcon : MonoBehaviour
     {
         spriteRenderer.sprite = iconWhenWaiting;
     }
+
+    public void moveOnPath(List<BoardCell> moveCells, Action onMoveDone)
+    {
+        //StartCoroutine(doMoveOnPath(moveCells, onMoveDone));
+        moveCells.Clear();
+        onMoveDone();
+    }
+
+    /*private IEnumerator doMoveOnPath(List<BoardCell> moveCells, Action onMoveDone)
+    {
+
+    }*/
 }

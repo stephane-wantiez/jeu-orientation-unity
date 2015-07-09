@@ -1,5 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
+using swantiez.unity.tools.utils;
 
 public class PlayerPiece
 {
@@ -11,7 +14,7 @@ public class PlayerPiece
 
     public BoardCell currentCell;
     public Vector3 currentPosition;
-    public HashSet<BoardCell> moveCells = new HashSet<BoardCell>();
+    public List<BoardCell> moveCells = new List<BoardCell>();
 
     private void updateIconPosition()
     {
@@ -31,13 +34,64 @@ public class PlayerPiece
     {
         if (playing) playerIcon.setAsPlaying();
         else playerIcon.setAsWaiting();
+
+        foreach(BoardCell cell in moveCells)
+        {
+            cell.resetCellColor();
+        }
         moveCells.Clear();
     }
 
     public void onCellClick(BoardCell cell)
     {
         if (cell == currentCell) return;
-        if (moveCells.Contains(cell)) moveCells.Remove(cell);
-        else moveCells.Add(cell);
+        if (moveCells.Contains(cell))
+        {
+            cell.resetCellColor();
+            moveCells.Remove(cell);
+        }
+        else
+        {
+            moveCells.Add(cell);
+        }
+    }
+
+    public void showValidPath(bool validPath)
+    {
+        foreach(BoardCell cell in moveCells)
+        {
+            cell.changeCellColorForPath(validPath);
+        }
+    }
+
+    private void onMoveOnPathDone(Action onMoveDone, BoardCell lastCell)
+    {
+        setCurrentCell(lastCell);
+        onMoveDone();
+    }
+
+    public void moveOnPath(Action onMoveDone)
+    {
+        foreach (BoardCell cell in moveCells)
+        {
+            cell.resetCellColor();
+        }
+        BoardCell lastCell = moveCells.Last();
+        playerIcon.moveOnPath(moveCells, () => onMoveOnPathDone(onMoveDone, lastCell));
+    }
+
+    public string toDebugStr()
+    {
+        string debugStr = "piece of player " + (player.id + 1);
+        if (moveCells.Count != 0)
+        {
+            debugStr += " - move cells: ";
+            debugStr += CollectionUtils.CollToString(moveCells, cell => { return cell.toDebugStr(); });
+        }
+        else
+        {
+            debugStr += " (no move cell)";
+        }
+        return debugStr;
     }
 }

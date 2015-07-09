@@ -25,6 +25,7 @@ public class PlayersManager : MonoBehaviour
     public Transform playersParent;
 
     public UIPanel changePiecePanel;
+    public UIPanel submitPathPanel;
 
     [HideInInspector]
     public PlayersTeam[] teams;
@@ -210,7 +211,7 @@ public class PlayersManager : MonoBehaviour
 
     public void displayPlayerTurnWindow()
     {
-        PopupManager.Instance.showPopupWithMessage(new LocalizedMessage(LOCKEY_PLAYER_TURN_START, currentPlayerIndex), onPlayerTurnWindowClosed);
+        PopupManager.Instance.showPopupWithMessage(new LocalizedMessage(LOCKEY_PLAYER_TURN_START, currentPlayerIndex + 1), onPlayerTurnWindowClosed);
     }
 
     public void startPlayerTurn()
@@ -219,7 +220,7 @@ public class PlayersManager : MonoBehaviour
         {
             updateUIForCurrentPlayer();
             Player player = players[currentPlayerIndex];
-            player.onNewTurn();
+            displayPlayerTurnWindow();
         }
     }
 
@@ -265,5 +266,21 @@ public class PlayersManager : MonoBehaviour
     public void onChangePlayerPiece()
     {
         players[currentPlayerIndex].onChangePiece();
+    }
+
+    public void onPlayerPathDefined(bool pathValid)
+    {
+        submitPathPanel.gameObject.SetActive(pathValid);
+    }
+
+    public void onSubmitPlayerPath()
+    {
+        players[currentPlayerIndex].onSubmitPath();
+    }
+
+    public void hideButtons()
+    {
+        changePiecePanel.gameObject.SetActive(false);
+        submitPathPanel.gameObject.SetActive(false);
     }
 }

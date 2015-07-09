@@ -1,13 +1,14 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using swantiez.unity.tools.utils;
 
 public class PathChecker : MonoBehaviour
 {
     public static PathChecker Instance { get; private set; }
 
     public enum PathDirection { Left, Right, Up, Down }
-    private enum CellType { Invalid, ValidMiddle, ValidEnd }
 
     void Awake()
     {
@@ -52,15 +53,22 @@ public class PathChecker : MonoBehaviour
         return nbAdjacentCells;
     }
 
-    private CellType getCellType(PlayerPiece piece, BoardCell cell, int nbAdjacentCells)
+    private enum CellType { Invalid, ValidMiddle, ValidEnd, ValidUnique }
+
+    private CellType getCellType(Player player, PlayerPiece piece, BoardCell cell, int nbAdjacentCells)
     {
-        if ((nbAdjacentCells == 0) || (nbAdjacentCells > 2)) return CellType.Invalid;
+        if (nbAdjacentCells > 2) return CellType.Invalid;
+        if (nbAdjacentCells == 0)
+        {
+            if (player.targetDistance == 1) return CellType.ValidUnique;
+            return CellType.Invalid;
+        }
         if (nbAdjacentCells == 2) return CellType.ValidMiddle;
         // nbAdjacentCells == 1
         return CellType.ValidEnd;
     }
 
-    private bool hasValidCoherentPath(PlayerPiece piece)
+    private bool hasValidCoherentPath(Player player, PlayerPiece piece)
     {
         int nbEndPath = 0;
         bool adjacentToPieceTreated = false;
@@ -69,22 +77,27 @@ public class PathChecker : MonoBehaviour
         {
             bool adjacentToPiece = false;
             int nbAdjacentCells = getNbAdjacentCells(cell, piece, ref adjacentToPiece);
-            CellType cellType = getCellType(piece, cell, nbAdjacentCells);
+            CellType cellType = getCellType(player, piece, cell, nbAdjacentCells);
 
-            if (cellType == CellType.Invalid)
+            switch(cellType)
             {
-                return false;
-            }
-            else if (cellType == CellType.ValidEnd)
-            {
-                ++nbEndPath;
-                if (nbEndPath > 2) return false;
-                
-                if (adjacentToPiece)
+                case CellType.ValidEnd:
                 {
-                    if (adjacentToPieceTreated) return false;
-                    adjacentToPieceTreated = true;
+                    ++nbEndPath;
+                    if (nbEndPath > 2) return false;
+                
+                    if (adjacentToPiece)
+                    {
+                        if (adjacentToPieceTreated) return false;
+                        adjacentToPieceTreated = true;
+                    }
+
+                    break;
                 }
+                case CellType.ValidUnique:
+                    return true;
+                case CellType.Invalid:
+                    return false;
             }
         }
 
@@ -120,12 +133,12 @@ public class PathChecker : MonoBehaviour
 
     private static bool updateRowIndexForPathDirection(ref int rowIndex, PathDirection direction)
     {
-        return updateIndexForPathDirection(ref rowIndex, getMaxRowIndex(), direction, PathDirection.Left, PathDirection.Right);
+        return updateIndexForPathDirection(ref rowIndex, getMaxRowIndex(), direction, PathDirection.Up, PathDirection.Down);
     }
 
     private static bool updateColumnIndexForPathDirection(ref int colIndex, PathDirection direction)
     {
-        return updateIndexForPathDirection(ref colIndex, getMaxColumnIndex(), direction, PathDirection.Up, PathDirection.Down);
+        return updateIndexForPathDirection(ref colIndex, getMaxColumnIndex(), direction, PathDirection.Left, PathDirection.Right);
     }
 
     private bool hasValidPathDirection(PlayerPiece piece, PathDirection direction1, PathDirection direction2)
@@ -138,6 +151,7 @@ public class PathChecker : MonoBehaviour
 
         for (int i = 0;; ++i)
         {
+            if (i >= piece.moveCells.Count) return true;
             int previousRowIndex = rowIndex;
             int previousColIndex = columnIndex;
             bool rowMoveOk = updateRowIndexForPathDirection(ref rowIndex, currentDirection);
@@ -158,12 +172,38 @@ public class PathChecker : MonoBehaviour
         }
     }
 
-    public bool isPathValidForPlayerPiece(Player player, PlayerPiece piece)
+    public enum CheckResult { ValidPath, WrongDistance, IncoherentPath, WrongDirection, OtherError }
+
+    public CheckResult isPathValidForPlayerPiece(Player player, PlayerPiece piece)
     {
-        if (!hasValidPathDistance(player, piece)) return false;
-        if (!hasValidCoherentPath(piece)) return false;
+        if (!hasValidPathDistance(player, piece)) return CheckResult.WrongDistance;
+        if (!hasValidCoherentPath(player, piece)) return CheckResult.IncoherentPath;
         PathDirection direction1ToTarget, direction2ToTarget;
         player.getDirectionsToTargets(out direction1ToTarget, out direction2ToTarget);
-        return hasValidPathDirection(piece, direction1ToTarget, direction2ToTarget) || hasValidPathDirection(piece, direction2ToTarget, direction1ToTarget);
+        bool dirRes = hasValidPathDirection(piece, direction1ToTarget, direction2ToTarget) || hasValidPathDirection(piece, direction2ToTarget, direction1ToTarget);
+        if (!dirRes) return CheckResult.WrongDirection;
+        return CheckResult.ValidPath;
+    }
+
+    public void sortPath(PlayerPiece piece)
+    {
+        BoardCell currentCell = piece.currentCell;
+        List<BoardCell> remainingCells = new List<BoardCell>(piece.moveCells);
+        List<BoardCell> orderedCells = new List<BoardCell>();
+
+        while (!remainingCells.IsEmpty())
+        {
+            IEnumerable<BoardCell> adjCells = remainingCells.Where(c => (c.leftCell  == currentCell) ||
+                                                                        (c.rightCell == currentCell) ||
+                                                                        (c.upCell    == currentCell) ||
+                                                                        (c.downCell  == currentCell));
+            if (adjCells.Count() == 0) break;
+            currentCell = adjCells.First();
+            if (currentCell == null) break;
+            remainingCells.Remove(currentCell);
+            orderedCells.Add(currentCell);
+        }
+
+        piece.moveCells = orderedCells;
     }
 }

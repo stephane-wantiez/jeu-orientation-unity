@@ -236,6 +236,18 @@ public class BoardGenerator : MonoBehaviour
                 generateBoardCellAtIndex(i, j);
             }
         }
+
+        for (int i = 0; i < nbRows; ++i)
+        {
+            for (int j = 0; j < nbColumns; ++j)
+            {
+                BoardCell currentCell = boardCells[i][j];
+                if (i > 0) currentCell.upCell = boardCells[i-1][j];
+                if (j > 0) currentCell.leftCell = boardCells[i][j-1];
+                if (i < nbRows-1) currentCell.downCell = boardCells[i+1][j];
+                if (j < nbColumns-1) currentCell.rightCell = boardCells[i][j+1];
+            }
+        }
     }
 
     public void resetBoard()

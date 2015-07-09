@@ -220,7 +220,8 @@ public class Player
                 if (currentPiece != null) currentPiece.moveCells.Clear();
                 break;
             case TurnState.Deplacement:
-                // TODO
+                PlayersManager.Instance.hideButtons();
+                if (currentPiece != null) currentPiece.moveOnPath(onMovePathDone);
                 break;
             case TurnState.FinTour:
                 if (currentPiece != null) currentPiece.setAsPlaying(false);
@@ -231,6 +232,7 @@ public class Player
 
     public void onChangePiece()
     {
+        PlayersManager.Instance.onPlayerPathDefined(false);
         team.changePiece();
     }
 
@@ -249,11 +251,28 @@ public class Player
     {
         if (GameManager.Instance.gameType == GameManager.GameType.Simple)
         {
-            bool pathValid = PathChecker.Instance.isPathValidForPlayerPiece(this, currentPiece);
+            PathChecker.CheckResult pathCheckRes = PathChecker.Instance.isPathValidForPlayerPiece(this, currentPiece);
+            bool pathValid = pathCheckRes == PathChecker.CheckResult.ValidPath;
+            currentPiece.showValidPath(pathValid);
+            Debug.Log("PATH CHECKER - Res: " + pathCheckRes.ToString() + " - " + currentPiece.toDebugStr());
             if (pathValid)
             {
-                Debug.Log("PATH VALID");
+                PathChecker.Instance.sortPath(currentPiece);
+                Debug.Log("SORTED PATH - " + currentPiece.toDebugStr());
             }
+            PlayersManager.Instance.onPlayerPathDefined(pathValid);
         }
+    }
+
+    public void onSubmitPath()
+    {
+        setTurnState(TurnState.Deplacement);
+    }
+
+    private void onMovePathDone()
+    {
+        PlayerPiece currentPiece = team.getActivePiece();
+        // TODO: treasures on path
+        PlayersManager.Instance.onPlayerTurnDone();
     }
 }
