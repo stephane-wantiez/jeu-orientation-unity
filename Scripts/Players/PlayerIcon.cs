@@ -28,15 +28,18 @@ public class PlayerIcon : MonoBehaviour
         spriteRenderer.sprite = iconWhenWaiting;
     }
 
-    public void moveOnPath(List<BoardCell> moveCells, Action onMoveDone)
+    public void moveOnPath(List<BoardCell> moveCells, Action<BoardCell> onEnteringCell, Action onMoveDone)
     {
-        //StartCoroutine(doMoveOnPath(moveCells, onMoveDone));
-        moveCells.Clear();
-        onMoveDone();
+        StartCoroutine(doMoveOnPath(moveCells, onEnteringCell, onMoveDone));
     }
 
-    /*private IEnumerator doMoveOnPath(List<BoardCell> moveCells, Action onMoveDone)
+    private IEnumerator doMoveOnPath(List<BoardCell> moveCells, Action<BoardCell> onEnteringCell, Action onMoveDone)
     {
-
-    }*/
+        foreach(BoardCell cell in moveCells)
+        {
+            onEnteringCell(cell);
+        }
+        onMoveDone();
+        yield return null;
+    }
 }

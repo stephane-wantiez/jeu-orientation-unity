@@ -5,6 +5,7 @@ public class PlayersTeam
     public int teamId;
     public Player[] players;
     public int activePieceIndex;
+    public int nbTreasures;
 
     public void onPlayerActive(Player player)
     {

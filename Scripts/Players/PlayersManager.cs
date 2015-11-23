@@ -156,7 +156,7 @@ public class PlayersManager : MonoBehaviour
         ++currentPlayerIndex;
         if (currentPlayerIndex != getNbPlayers())
         {
-            Tresors.Instance.startTresorPlacementForPlayer(currentPlayerIndex);
+            TreasuresManager.Instance.startTresorPlacementForPlayer(currentPlayerIndex);
         }
         else
         {
@@ -229,11 +229,23 @@ public class PlayersManager : MonoBehaviour
         return players[currentPlayerIndex];
     }
 
+    private bool hasCurrentPlayerWon()
+    {
+        return !TreasuresManager.Instance.hasTreasuresLeft();
+    }
+
     public void onPlayerTurnDone()
     {
-        getCurrentPlayer().onTurnDone();
-        currentPlayerIndex = (currentPlayerIndex + 1) % getNbPlayers();
-        startPlayerTurn();
+        if (hasCurrentPlayerWon())
+        {
+            GameManager.Instance.State = GameManager.GameState.GameOver;
+        }
+        else
+        {
+	        getCurrentPlayer().onTurnDone();
+	        currentPlayerIndex = (currentPlayerIndex + 1) % getNbPlayers();
+	        startPlayerTurn();
+        }
     }
 
     private void onGameStateChange(GameManager.GameState newState)
@@ -244,7 +256,7 @@ public class PlayersManager : MonoBehaviour
         switch (newState)
         {
             case GameManager.GameState.PlaceTreasures:
-                Tresors.Instance.startTresorPlacementForPlayer(0);
+                TreasuresManager.Instance.startTresorPlacementForPlayer(0);
                 break;
             case GameManager.GameState.ChoosePieceStartup:
                 chooseStartupPositionForCurrentPlayer();
@@ -282,5 +294,22 @@ public class PlayersManager : MonoBehaviour
     {
         changePiecePanel.gameObject.SetActive(false);
         submitPathPanel.gameObject.SetActive(false);
+    }
+
+    public PlayersTeam getVictoriousTeam()
+    {
+        PlayersTeam victoriousTeam = null;
+        int nbTreasuresOfVictoriousTeam = -1;
+
+        foreach (PlayersTeam team in teams)
+        {
+            if (team.nbTreasures > nbTreasuresOfVictoriousTeam)
+            {
+                victoriousTeam = team;
+                nbTreasuresOfVictoriousTeam = team.nbTreasures;
+            }
+        }
+
+        return victoriousTeam;
     }
 }

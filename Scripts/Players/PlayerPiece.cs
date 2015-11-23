@@ -64,8 +64,24 @@ public class PlayerPiece
         }
     }
 
+    private void onTreasureFoundInCell(BoardCell cell)
+    {
+        ++player.team.nbTreasures;
+        TreasuresManager.Instance.onTreasurePickup(cell.treasure);
+        cell.treasure = null;
+    }
+
+    private void onMovingOnCell(BoardCell cell)
+    {
+        if (cell.treasure != null)
+        {
+            onTreasureFoundInCell(cell);
+        }
+    }
+
     private void onMoveOnPathDone(Action onMoveDone, BoardCell lastCell)
     {
+        moveCells.Clear();
         setCurrentCell(lastCell);
         onMoveDone();
     }
@@ -77,7 +93,7 @@ public class PlayerPiece
             cell.resetCellColor();
         }
         BoardCell lastCell = moveCells.Last();
-        playerIcon.moveOnPath(moveCells, () => onMoveOnPathDone(onMoveDone, lastCell));
+        playerIcon.moveOnPath(moveCells, onMovingOnCell, () => onMoveOnPathDone(onMoveDone, lastCell));
     }
 
     public string toDebugStr()

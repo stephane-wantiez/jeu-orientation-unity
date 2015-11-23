@@ -256,8 +256,6 @@ public class Player
 
     private void onMovePathDone()
     {
-        PlayerPiece currentPiece = team.getActivePiece();
-        // TODO: treasures on path
         PlayersManager.Instance.onPlayerTurnDone();
     }
 }

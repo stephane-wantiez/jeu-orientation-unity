@@ -52,11 +52,19 @@ public class GameManager : MonoBehaviour
         switch (_state)
         {
             case GameState.BoardGeneration:
+            {
                 BoardGenerator.Instance.generateBoard();
                 ReperesManager.Instance.generateReperes();
                 DicesManager.Instance.setColorsOfChoiceButtons();
                 State = GameState.PlaceTreasures;
                 break;
+            }
+            case GameState.GameOver:
+            {
+                PlayersTeam victoriousTeam = PlayersManager.Instance.getVictoriousTeam();
+                PopupManager.Instance.showPopupWithMessage(new LocalizedMessage("victory", (victoriousTeam.teamId + 1)));
+                break;
+            }
         }
     }
 
@@ -65,7 +73,7 @@ public class GameManager : MonoBehaviour
         switch (State)
         {
             case GameState.PlaceTreasures:
-                Tresors.Instance.placeTresorInCell(cell);
+                TreasuresManager.Instance.placeTresorInCell(cell);
                 break;
         }
     }
