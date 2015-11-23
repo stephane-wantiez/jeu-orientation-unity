@@ -54,6 +54,7 @@ public class GameManager : MonoBehaviour
             case GameState.BoardGeneration:
                 BoardGenerator.Instance.generateBoard();
                 ReperesManager.Instance.generateReperes();
+                DicesManager.Instance.setColorsOfChoiceButtons();
                 State = GameState.PlaceTreasures;
                 break;
         }

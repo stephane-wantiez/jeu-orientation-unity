@@ -180,21 +180,6 @@ public class Player
         setTurnState(TurnState.ChoixChemin);
     }
 
-    private void getDirectionToTarget(RepereType repere, out PathChecker.PathDirection direction)
-    {
-        if (repere == ReperesManager.Instance.repereBas) direction = PathChecker.PathDirection.Down;
-        else if (repere == ReperesManager.Instance.repereHaut) direction = PathChecker.PathDirection.Up;
-        else if (repere == ReperesManager.Instance.repereGauche) direction = PathChecker.PathDirection.Left;
-        else direction = PathChecker.PathDirection.Right;
-    }
-
-    public void getDirectionsToTargets(out PathChecker.PathDirection direction1, out PathChecker.PathDirection direction2)
-    {
-        getDirectionToTarget(targetRepere1, out direction1);
-        if (targetRepere2 == null) direction2 = direction1;
-        else getDirectionToTarget(targetRepere2, out direction2);
-    }
-
     private void onStateChange()
     {
         PlayerPiece currentPiece = team.getActivePiece();
@@ -204,7 +189,7 @@ public class Player
             case TurnState.DebutTour:
                 team.onPlayerActive(this);
                 currentPiece = team.getActivePiece();
-                DicesManager.Instance.showDices();
+                //DicesManager.Instance.showDices();
                 setTurnState(TurnState.LancementDeReperes);
                 break;
             case TurnState.LancementDeReperes:

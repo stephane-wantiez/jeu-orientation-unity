@@ -53,7 +53,7 @@ public class DicesManager : MonoBehaviour
         diceOrientation.SetActive(false);
     }
 
-    public void showDices()
+    /*public void showDices()
     {
         hideDices();
 
@@ -69,7 +69,7 @@ public class DicesManager : MonoBehaviour
         {
             diceCardinal.SetActive(true);
         }
-    }
+    }*/
 
     public void displayPassMessage(bool display = true)
     {
@@ -94,7 +94,7 @@ public class DicesManager : MonoBehaviour
         button.disabledColor = color;
     }
 
-    private void setColorsOfChoiceButtons()
+    public void setColorsOfChoiceButtons()
     {
         for (int i = 0; i < 4; ++i)
         {
@@ -108,11 +108,13 @@ public class DicesManager : MonoBehaviour
         bool diceColorChooseFlag = repereType == RepereType.TypeCouleur.Multiple;
         bool diceColorPassFlag = repereType == RepereType.TypeCouleur.Passe;
 
+        diceColor.SetActive(true);
         diceColorSprite.color = repereColor;
         diceColorSprite.gameObject.SetActive(!diceColorChooseFlag && !diceColorPassFlag);
         diceColorChoose.SetActive(diceColorChooseFlag);
         diceColorChooseWindow.SetActive(diceColorChooseFlag);
         diceColorPass.SetActive(diceColorPassFlag);
+
         displayPassMessage(diceColorPassFlag);
     }
 
@@ -145,6 +147,7 @@ public class DicesManager : MonoBehaviour
         bool diceCardPass1Flag = repereType1 == RepereType.TypePointCardinal.Passe;
         bool diceCardPass2Flag = repereType2 == RepereType.TypePointCardinal.Passe;
 
+        diceCardinal.SetActive(true);
         diceCardinalChoose.SetActive(diceCardChooseFlag);
         diceCardinalChooseWindow.SetActive(diceCardChooseFlag);
         diceCardinalPass.SetActive(diceCardPass1Flag || diceCardPass2Flag);
@@ -165,8 +168,9 @@ public class DicesManager : MonoBehaviour
     public void setDiceDistance(int distance)
     {
         bool chooseDistance = distance == GameManager.MAX_DISTANCE + 1;
-
         if (!chooseDistance) diceDistanceValue.text = distance.ToString();
+
+        diceDistance.SetActive(true);
         diceDistanceValue.gameObject.SetActive(!chooseDistance);
         diceDistanceChoose.SetActive(chooseDistance);
         diceDistanceChooseWindow.SetActive(chooseDistance);
@@ -179,10 +183,12 @@ public class DicesManager : MonoBehaviour
         bool diceOrientationChooseFlag = chosenOrientation.type == Orientation.OrientationType.Choose;
         bool diceOrientationPassFlag = chosenOrientation.type == Orientation.OrientationType.Pass;
 
+        diceOrientation.SetActive(true);
         diceOrientationValue.gameObject.SetActive(!diceOrientationChooseFlag && !diceOrientationPassFlag);
         diceOrientationChoose.SetActive(diceOrientationChooseFlag);
         diceOrientationChooseWindow.SetActive(diceOrientationChooseFlag);
         diceOrientationPass.SetActive(diceOrientationPassFlag);
+
         displayPassMessage(diceOrientationPassFlag);
     }
 }
