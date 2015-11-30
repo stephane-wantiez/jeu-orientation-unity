@@ -25,6 +25,14 @@ public class BoardGenerator : MonoBehaviour
     public float boardStartInScreenHeightProportion;
     [Range(0.5f, 1f)]
     public float boardEndInScreenHeightProportion;
+    [Range(0f, 0.5f)]
+    public float repereLeftInScreenWidthProportion;
+    [Range(0.5f, 1f)]
+    public float repereRightInScreenWidthProportion;
+    [Range(0f, 0.5f)]
+    public float repereBottomInScreenHeightProportion;
+    [Range(0.5f, 1f)]
+    public float repereTopInScreenHeightProportion;
     public float boardPositionInZ;
     public IndexType rowIndexType;
     public IndexType columnIndexType;
@@ -35,6 +43,7 @@ public class BoardGenerator : MonoBehaviour
     public Transform labelsParent;
     public Transform linesParent;
     public Transform boardCellsParent;
+    public ReperesManager reperes;
     [HideInInspector]
     public bool boardGenerated;
 
@@ -69,6 +78,8 @@ public class BoardGenerator : MonoBehaviour
         float boardMaxPosInX = minCamPos.x + screenWidthAtZ * boardEndInScreenWidthProportion;
         float boardMinPosInY = minCamPos.y + screenHeightAtZ * boardStartInScreenHeightProportion;
         float boardMaxPosInY = minCamPos.y + screenHeightAtZ * boardEndInScreenHeightProportion;
+        float boardMiddlePosInX = boardMinPosInX + (boardMaxPosInX - boardMinPosInX) / 2.0f;
+        float boardMiddlePosInY = boardMinPosInY + (boardMaxPosInY - boardMinPosInY) / 2.0f;
 
         boardStartPosition = new Vector3(boardMinPosInX, boardMaxPosInY, boardPositionInZ);
         boardWidth = boardMaxPosInX - boardMinPosInX;
@@ -79,7 +90,16 @@ public class BoardGenerator : MonoBehaviour
         spaceBetweenColumns = boardWidth / (nbColumns+1);
         spaceBetweenRows = boardHeight / (nbRows+1);
         boardCellScale = new Vector3(spaceBetweenColumns, spaceBetweenRows, boardCellPrefab.transform.localScale.z);
-        
+
+        float   repereLeftPosInX = minCamPos.x +  screenWidthAtZ * repereLeftInScreenWidthProportion;
+        float  repereRightPosInX = minCamPos.x +  screenWidthAtZ * repereRightInScreenWidthProportion;
+        float    repereTopPosInY = minCamPos.y + screenHeightAtZ * repereTopInScreenHeightProportion;
+        float repereBottomPosInY = minCamPos.y + screenHeightAtZ * repereBottomInScreenHeightProportion;
+
+          reperes.repereLeftPosition.position = new Vector3( repereLeftPosInX,  boardMiddlePosInY, boardPositionInZ);
+         reperes.repereRightPosition.position = new Vector3(repereRightPosInX,  boardMiddlePosInY, boardPositionInZ);
+           reperes.repereTopPosition.position = new Vector3(boardMiddlePosInX,    repereTopPosInY, boardPositionInZ);
+        reperes.repereBottomPosition.position = new Vector3(boardMiddlePosInX, repereBottomPosInY, boardPositionInZ);
     }
 
     private void generateBoardLabelAt(Vector3 position, string labelStr, Transform labelParent)

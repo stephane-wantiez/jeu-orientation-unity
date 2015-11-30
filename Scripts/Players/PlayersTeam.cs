@@ -16,11 +16,11 @@ public class PlayersTeam
             if (players[i] == player)
             {
                 activePieceIndex = i;
-                player.piece.setAsPlaying(true);
+                player.piece.setAsPlaying(true, false);
             }
             else
             {
-                players[i].piece.setAsPlaying(false);
+                players[i].piece.setAsPlaying(false, true);
             }
         }
     }
@@ -28,9 +28,9 @@ public class PlayersTeam
     public void changePiece()
     {
         if (players.Length == 0) return;
-        if (activePieceIndex >= 0) players[activePieceIndex].piece.setAsPlaying(false);
+        if (activePieceIndex >= 0) players[activePieceIndex].piece.setAsPlaying(false, true);
         activePieceIndex = (activePieceIndex + 1) % players.Length;
-        players[activePieceIndex].piece.setAsPlaying(true);
+        players[activePieceIndex].piece.setAsPlaying(true, false);
     }
 
     public PlayerPiece getActivePiece()

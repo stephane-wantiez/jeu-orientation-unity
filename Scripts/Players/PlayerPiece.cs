@@ -7,7 +7,9 @@ using swantiez.unity.tools.utils;
 public class PlayerPiece
 {
     private const int MAX_DISTANCE = 5;
-    public float fixedPositionInZ;
+
+    public float fixedPositionInZWhenWaiting;
+    public float fixedPositionInZWhenPlaying;
 
     public Player player;
     public PlayerIcon playerIcon;
@@ -16,9 +18,11 @@ public class PlayerPiece
     public Vector3 currentPosition;
     public List<BoardCell> moveCells = new List<BoardCell>();
 
+    private bool playing = false;
+
     private void updateIconPosition()
     {
-        currentPosition.z = fixedPositionInZ;
+        currentPosition.z = playing ? fixedPositionInZWhenPlaying : fixedPositionInZWhenWaiting;
         playerIcon.transform.position = currentPosition;
     }
 
@@ -30,10 +34,22 @@ public class PlayerPiece
         updateIconPosition();
     }
 
-    public void setAsPlaying(bool playing)
+    public void setAsPlaying(bool inPlaying, bool teamPlaying)
     {
-        if (playing) playerIcon.setAsPlaying();
-        else playerIcon.setAsWaiting();
+        playing = inPlaying;
+
+        if (playing)
+        {
+            playerIcon.setAsPlayer();
+        }
+        else if (teamPlaying)
+        {
+            playerIcon.setAsTeam();
+        }
+        else
+        {
+            playerIcon.setAsWaiting();
+        }
 
         foreach(BoardCell cell in moveCells)
         {

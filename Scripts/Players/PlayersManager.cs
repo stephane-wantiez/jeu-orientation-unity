@@ -9,6 +9,7 @@ public class PlayersManager : MonoBehaviour
     public const int NB_PLAYERS_MAX = 5;
     public const int NB_TEAMS_MIN = 1;
     public const int NB_TEAMS_MAX = 3;
+    public const string LOCKEY_INFOS = "move_infos";
     public const string LOCKEY_PLAYER_TURN_START = "player_turn";
     public const string LOCKEY_PLAYER_STARTUP_POS = "startup_player_position";
 
@@ -18,7 +19,9 @@ public class PlayersManager : MonoBehaviour
     public int nbTeams;
     [Range(NB_PLAYERS_MIN, NB_PLAYERS_MAX)]
     public int nbPlayersPerTeam;
-    public float playerFixedPositionInZ;
+
+    public float playerFixedPositionInZWhenWaiting;
+    public float playerFixedPositionInZWhenPlaying;
 
     public PlayerUI[] playersUI;
     public PlayerIcon[] playersIcons;
@@ -26,13 +29,17 @@ public class PlayersManager : MonoBehaviour
 
     public UIPanel changePiecePanel;
     public UIPanel submitPathPanel;
+    public UIPanel infosUIPanel;
+    public UILabel infosUILabel;
 
     [HideInInspector]
     public PlayersTeam[] teams;
     [HideInInspector]
     public Player[] players;
     [HideInInspector]
-    public int currentPlayerIndex;
+    public int currentPlayerIndex = 0;
+    [HideInInspector]
+    public int currentTeamIndex = 0;
 
     private readonly List<PlayerIcon> availablePlayerIcons = new List<PlayerIcon>();
     private bool gameOngoing;
@@ -41,7 +48,6 @@ public class PlayersManager : MonoBehaviour
     void Awake()
     {
         Instance = this;
-        resetPlayersUI();
         initPlayersIcons();
         initializeTeams(); // TEMPORARY
     }
@@ -50,6 +56,7 @@ public class PlayersManager : MonoBehaviour
     {
         GameManager.Instance.OnGameStateChangeEvents += onGameStateChange;
         Board.Instance.OnCellClickEvents += onCellClick;
+        resetPlayersUI(false);
     }
 
     private int getNbPlayers()
@@ -85,11 +92,14 @@ public class PlayersManager : MonoBehaviour
         }
     }
 
-    private void resetPlayersUI()
+    private void resetPlayersUI(bool showUi)
     {
+        infosUILabel.text = LocalizationUtils.GetLocalizedMessage(LOCKEY_INFOS);
+        infosUIPanel.gameObject.SetActive(showUi);
+
         foreach(PlayerUI playerUI in playersUI)
         {
-            playerUI.gameObject.SetActive(false);
+            playerUI.gameObject.SetActive(showUi);
         }
     }
 
@@ -97,7 +107,7 @@ public class PlayersManager : MonoBehaviour
     {
         for (int i = 0; i < getNbPlayers(); ++i)
         {
-            playersUI[i].onPlayerTurn(i == currentPlayerIndex);
+            playersUI[i].onPlayerTurn(currentPlayerIndex, currentTeamIndex);
         }
 
         bool canChangePiece = getCurrentPlayer().team.canChangePiece();
@@ -117,6 +127,12 @@ public class PlayersManager : MonoBehaviour
             teams[i] = team;
             initializeTeamPlayers(team);
         }
+
+        currentPlayerIndex = 0;
+        if (getCurrentPlayer() != null)
+        {
+            currentTeamIndex = getCurrentPlayer().team.teamId;
+        }
     }
 
     public void initializeTeamPlayers(PlayersTeam team)
@@ -130,7 +146,8 @@ public class PlayersManager : MonoBehaviour
             player.piece.player = player;
             player.id = playerCounter++;
             player.team = team;
-            player.piece.fixedPositionInZ = playerFixedPositionInZ;
+            player.piece.fixedPositionInZWhenPlaying = playerFixedPositionInZWhenPlaying;
+            player.piece.fixedPositionInZWhenWaiting = playerFixedPositionInZWhenWaiting;
             player.piece.playerIcon = availablePlayerIcons[0];
             GameObject playerIconObject = Instantiate(player.piece.playerIcon.gameObject) as GameObject;
             if (playerIconObject)
@@ -151,16 +168,28 @@ public class PlayersManager : MonoBehaviour
         players[currentPlayerIndex].onNewTurn();
     }
 
-    public void onPlacementTresorDoneForPlayer()
+    private void incrementPlayerIndex(out bool indexReset)
     {
         ++currentPlayerIndex;
-        if (currentPlayerIndex != getNbPlayers())
+        indexReset = currentPlayerIndex == getNbPlayers();
+        if (indexReset)
         {
-            TreasuresManager.Instance.startTresorPlacementForPlayer(currentPlayerIndex);
+            currentPlayerIndex = 0;
+        }
+        currentTeamIndex = getCurrentPlayer().team.teamId;
+    }
+
+    public void onPlacementTresorDoneForPlayer()
+    {
+        bool indexReset;
+        incrementPlayerIndex(out indexReset);
+        if (indexReset)
+        {
+            GameManager.Instance.State = GameManager.GameState.ChoosePieceStartup;
         }
         else
         {
-            GameManager.Instance.State = GameManager.GameState.ChoosePieceStartup;
+            TreasuresManager.Instance.startTresorPlacementForPlayer(currentPlayerIndex);
         }
     }
 
@@ -185,7 +214,7 @@ public class PlayersManager : MonoBehaviour
 
     private void displayStartupPositionMessageForPlayer(Player player)
     {
-        player.piece.setAsPlaying(true);
+        player.piece.setAsPlaying(true, false);
 
         LocalizedMessage startupPositionMessage = new LocalizedMessage( LOCKEY_PLAYER_STARTUP_POS,
                                                                         player.id + 1,
@@ -196,16 +225,18 @@ public class PlayersManager : MonoBehaviour
 
     public void onStartupPositionMessageValidated()
     {
-        players[currentPlayerIndex].piece.setAsPlaying(false);
+        players[currentPlayerIndex].piece.setAsPlaying(false, false);
 
-        if (currentPlayerIndex != getNbPlayers() - 1)
+        bool indexReset;
+        incrementPlayerIndex(out indexReset);
+
+        if (indexReset)
         {
-            ++currentPlayerIndex;
-            chooseStartupPositionForCurrentPlayer();
+            GameManager.Instance.State = GameManager.GameState.Game;
         }
         else
         {
-            GameManager.Instance.State = GameManager.GameState.Game;
+            chooseStartupPositionForCurrentPlayer();
         }
     }
 
@@ -243,7 +274,8 @@ public class PlayersManager : MonoBehaviour
         else
         {
 	        getCurrentPlayer().onTurnDone();
-	        currentPlayerIndex = (currentPlayerIndex + 1) % getNbPlayers();
+            bool indexReset;
+            incrementPlayerIndex(out indexReset);
 	        startPlayerTurn();
         }
     }
@@ -262,6 +294,7 @@ public class PlayersManager : MonoBehaviour
                 chooseStartupPositionForCurrentPlayer();
                 break;
             case GameManager.GameState.Game:
+                resetPlayersUI(true);
                 startPlayerTurn();
                 break;
             case GameManager.GameState.GameOver:

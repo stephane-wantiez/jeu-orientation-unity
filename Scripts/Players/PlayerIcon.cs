@@ -5,8 +5,9 @@ using UnityEngine;
 
 public class PlayerIcon : MonoBehaviour
 {
-    public Sprite iconWhenPlaying;
-    public Sprite iconWhenWaiting;
+    public Sprite iconForPlayer;
+    public Sprite iconForTeam;
+    public Sprite iconForWaiting;
     public Sprite iconInUi;
     public bool orientedIcon;
 
@@ -18,14 +19,19 @@ public class PlayerIcon : MonoBehaviour
         setAsWaiting();
     }
 
-    public void setAsPlaying()
+    public void setAsPlayer()
     {
-        spriteRenderer.sprite = iconWhenPlaying;
+        spriteRenderer.sprite = iconForPlayer;
+    }
+
+    public void setAsTeam()
+    {
+        spriteRenderer.sprite = iconForTeam;
     }
 
     public void setAsWaiting()
     {
-        spriteRenderer.sprite = iconWhenWaiting;
+        spriteRenderer.sprite = iconForWaiting;
     }
 
     public void moveOnPath(List<BoardCell> moveCells, Action<BoardCell> onEnteringCell, Action onMoveDone)

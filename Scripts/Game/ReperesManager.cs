@@ -12,15 +12,15 @@ public class ReperesManager : MonoBehaviour
     private readonly Dictionary<RepereType.TypeCouleur, RepereType> reperesPerColor = new Dictionary<RepereType.TypeCouleur, RepereType>();
     private readonly Dictionary<RepereType.TypePointCardinal, RepereType> reperesPerCard = new Dictionary<RepereType.TypePointCardinal, RepereType>();
 
-    public Transform repereHautPosition;
-    public Transform repereDroitePosition;
-    public Transform repereBasPosition;
-    public Transform repereGauchePosition;
+    public Transform repereTopPosition;
+    public Transform repereRightPosition;
+    public Transform repereBottomPosition;
+    public Transform repereLeftPosition;
 
-    public RepereType repereHaut;
-    public RepereType repereDroite;
-    public RepereType repereBas;
-    public RepereType repereGauche;
+    public RepereType repereTop;
+    public RepereType repereRight;
+    public RepereType repereBottom;
+    public RepereType repereLeft;
 
     void Awake()
     {
@@ -58,10 +58,10 @@ public class ReperesManager : MonoBehaviour
         }
         colors.ShuffleFY();
 
-        repereHaut   = reperesPerColor[colors[0]];
-        repereDroite = reperesPerColor[colors[1]];
-        repereBas    = reperesPerColor[colors[2]];
-        repereGauche = reperesPerColor[colors[3]];
+        repereTop    = reperesPerColor[colors[0]];
+        repereRight  = reperesPerColor[colors[1]];
+        repereBottom = reperesPerColor[colors[2]];
+        repereLeft   = reperesPerColor[colors[3]];
     }
 
     private void initReperesWithRandomPointCardinal()
@@ -71,10 +71,10 @@ public class ReperesManager : MonoBehaviour
         int pointCardinalBasValue    = (pointCardinalHautValue + 2) % RepereType.NB_TYPE_REGULIER;
         int pointCardinalGaucheValue = (pointCardinalHautValue + 3) % RepereType.NB_TYPE_REGULIER;
 
-        repereHaut   = reperesPerCard[(RepereType.TypePointCardinal)pointCardinalHautValue  ];
-        repereDroite = reperesPerCard[(RepereType.TypePointCardinal)pointCardinalDroiteValue];
-        repereBas    = reperesPerCard[(RepereType.TypePointCardinal)pointCardinalBasValue   ];
-        repereGauche = reperesPerCard[(RepereType.TypePointCardinal)pointCardinalGaucheValue];
+        repereTop    = reperesPerCard[(RepereType.TypePointCardinal)pointCardinalHautValue  ];
+        repereRight  = reperesPerCard[(RepereType.TypePointCardinal)pointCardinalDroiteValue];
+        repereBottom = reperesPerCard[(RepereType.TypePointCardinal)pointCardinalBasValue   ];
+        repereLeft   = reperesPerCard[(RepereType.TypePointCardinal)pointCardinalGaucheValue];
     }
 
     private void initReperes()
@@ -98,40 +98,40 @@ public class ReperesManager : MonoBehaviour
 
     private void clearReperesParents()
     {
-        repereHautPosition.DestroyAllChildren(false);
-        repereDroitePosition.DestroyAllChildren(false);
-        repereBasPosition.DestroyAllChildren(false);
-        repereGauchePosition.DestroyAllChildren(false);
+        repereTopPosition.DestroyAllChildren(false);
+        repereRightPosition.DestroyAllChildren(false);
+        repereBottomPosition.DestroyAllChildren(false);
+        repereLeftPosition.DestroyAllChildren(false);
     }
 
     public void generateReperes()
     {
         initReperes();
         clearReperesParents();
-        generateRepere(repereHaut, repereHautPosition);
-        generateRepere(repereDroite, repereDroitePosition);
-        generateRepere(repereBas, repereBasPosition);
-        generateRepere(repereGauche, repereGauchePosition);
+        generateRepere(repereTop, repereTopPosition);
+        generateRepere(repereRight, repereRightPosition);
+        generateRepere(repereBottom, repereBottomPosition);
+        generateRepere(repereLeft, repereLeftPosition);
     }
 
     public RepereType getRepereTypeWithIndex(int repereIndex)
     {
         switch (repereIndex)
         {
-            case 0: return repereHaut;
-            case 1: return repereDroite;
-            case 2: return repereBas;
-            default: return repereGauche;
+            case 0: return repereTop;
+            case 1: return repereRight;
+            case 2: return repereBottom;
+            default: return repereLeft;
         }
     }
 
     public RepereType getCardinalRepereType(RepereType.TypePointCardinal cardinalType)
     {
-        if (repereHaut.type == RepereType.TypeEnum.Couleur) return null;
-        if (repereHaut.typePointCardinal == cardinalType) return repereHaut;
-        if (repereDroite.typePointCardinal == cardinalType) return repereDroite;
-        if (repereBas.typePointCardinal == cardinalType) return repereBas;
-        if (repereGauche.typePointCardinal == cardinalType) return repereGauche;
+        if (repereTop.type == RepereType.TypeEnum.Couleur) return null;
+        if (repereTop.typePointCardinal == cardinalType) return repereTop;
+        if (repereRight.typePointCardinal == cardinalType) return repereRight;
+        if (repereBottom.typePointCardinal == cardinalType) return repereBottom;
+        if (repereLeft.typePointCardinal == cardinalType) return repereLeft;
         return null;
     }
 }

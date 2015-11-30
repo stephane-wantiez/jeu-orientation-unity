@@ -31,36 +31,32 @@ public class PathChecker : MonoBehaviour
                 (piece.currentCell.colIndex == colIndex));
     }
 
-    private void checkAdjacentCell(int checkedRowIndex, int checkedColIndex, PlayerPiece piece, ref bool adjacentToPiece, ref int nbAdjacentCells)
+    private void checkAdjacentCell(int checkedRowIndex, int checkedColIndex, PlayerPiece piece, ref int nbAdjacentCells)
     {
-        if (isPieceAt(checkedRowIndex, checkedColIndex, piece))
-        {
-            adjacentToPiece = true;
-        }
-        else if (hasSelectedCellAt(checkedRowIndex, checkedColIndex, piece))
+        if (isPieceAt(checkedRowIndex, checkedColIndex, piece) || hasSelectedCellAt(checkedRowIndex, checkedColIndex, piece))
         {
             ++nbAdjacentCells;
         }
     }
 
-    private int getNbAdjacentCells(BoardCell cell, PlayerPiece piece, ref bool adjacentToPiece)
+    private int getNbAdjacentCells(BoardCell cell, PlayerPiece piece)
     {
         int nbAdjacentCells = 0;
-        if (cell.rowIndex != 0)                                 checkAdjacentCell(cell.rowIndex - 1, cell.colIndex,     piece, ref adjacentToPiece, ref nbAdjacentCells);
-        if (cell.rowIndex != BoardGenerator.Instance.nbRows)    checkAdjacentCell(cell.rowIndex + 1, cell.colIndex,     piece, ref adjacentToPiece, ref nbAdjacentCells);
-        if (cell.colIndex != 0)                                 checkAdjacentCell(cell.rowIndex,     cell.colIndex - 1, piece, ref adjacentToPiece, ref nbAdjacentCells);
-        if (cell.colIndex != BoardGenerator.Instance.nbColumns) checkAdjacentCell(cell.rowIndex,     cell.colIndex + 1, piece, ref adjacentToPiece, ref nbAdjacentCells);
+        if (cell.rowIndex != 0)                                 checkAdjacentCell(cell.rowIndex - 1, cell.colIndex,     piece, ref nbAdjacentCells);
+        if (cell.rowIndex != BoardGenerator.Instance.nbRows)    checkAdjacentCell(cell.rowIndex + 1, cell.colIndex,     piece, ref nbAdjacentCells);
+        if (cell.colIndex != 0)                                 checkAdjacentCell(cell.rowIndex,     cell.colIndex - 1, piece, ref nbAdjacentCells);
+        if (cell.colIndex != BoardGenerator.Instance.nbColumns) checkAdjacentCell(cell.rowIndex,     cell.colIndex + 1, piece, ref nbAdjacentCells);
         return nbAdjacentCells;
     }
 
-    private enum CellType { Invalid, ValidMiddle, ValidEnd, ValidUnique }
+    private enum CellType { Invalid, ValidMiddle, ValidEnd/*, ValidUnique*/ }
 
     private CellType getCellType(Player player, PlayerPiece piece, BoardCell cell, int nbAdjacentCells)
     {
         if (nbAdjacentCells > 2) return CellType.Invalid;
         if (nbAdjacentCells == 0)
         {
-            if (player.targetDistance == 1) return CellType.ValidUnique;
+            //if (player.targetDistance == 1) return CellType.ValidUnique;
             return CellType.Invalid;
         }
         if (nbAdjacentCells == 2) return CellType.ValidMiddle;
@@ -71,12 +67,12 @@ public class PathChecker : MonoBehaviour
     private bool hasValidCoherentPath(Player player, PlayerPiece piece)
     {
         int nbEndPath = 0;
-        bool adjacentToPieceTreated = false;
+        //bool adjacentToPieceTreated = false;
 
         foreach (BoardCell cell in piece.moveCells)
         {
-            bool adjacentToPiece = false;
-            int nbAdjacentCells = getNbAdjacentCells(cell, piece, ref adjacentToPiece);
+            //bool adjacentToPiece = false;
+            int nbAdjacentCells = getNbAdjacentCells(cell, piece/*, ref adjacentToPiece*/);
             CellType cellType = getCellType(player, piece, cell, nbAdjacentCells);
 
             switch(cellType)
@@ -86,35 +82,38 @@ public class PathChecker : MonoBehaviour
                     ++nbEndPath;
                     if (nbEndPath > 2) return false;
                 
-                    if (adjacentToPiece)
+                    /*if (adjacentToPiece)
                     {
                         if (adjacentToPieceTreated) return false;
                         adjacentToPieceTreated = true;
-                    }
+                    }*/
 
                     break;
                 }
-                case CellType.ValidUnique:
-                    return true;
+                /*case CellType.ValidUnique:
+                    return true;*/
                 case CellType.Invalid:
                     return false;
             }
         }
 
-        return adjacentToPieceTreated;
+        return true; // adjacentToPieceTreated;
     }
 
     private bool hasValidPathDirection(PlayerPiece piece, PathMemory pathMemory)
     {
         pathMemory.currentRowIndex = piece.currentCell.rowIndex;
         pathMemory.currentColIndex = piece.currentCell.colIndex;
+        bool firstMove = true;
 
         foreach (BoardCell currentCell in piece.moveCells)
         {
-            if (!pathMemory.checkNextMove(currentCell.rowIndex, currentCell.colIndex))
+            if (!pathMemory.checkNextMove(currentCell.rowIndex, currentCell.colIndex, firstMove))
             {
                 return false;
             }
+
+            firstMove = false;
         }
 
         return true;

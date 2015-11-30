@@ -209,7 +209,7 @@ public class Player
                 if (currentPiece != null) currentPiece.moveOnPath(onMovePathDone);
                 break;
             case TurnState.FinTour:
-                if (currentPiece != null) currentPiece.setAsPlaying(false);
+                if (currentPiece != null) currentPiece.setAsPlaying(false, false);
                 DicesManager.Instance.hideDices();
                 break;
         }

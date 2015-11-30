@@ -16,9 +16,9 @@ public class PathMemory
 
     private static void getDirectionToTarget(RepereType repere, out PathChecker.PathDirection direction)
     {
-        if (repere == ReperesManager.Instance.repereBas) direction = PathChecker.PathDirection.Down;
-        else if (repere == ReperesManager.Instance.repereHaut) direction = PathChecker.PathDirection.Up;
-        else if (repere == ReperesManager.Instance.repereGauche) direction = PathChecker.PathDirection.Left;
+        if (repere == ReperesManager.Instance.repereBottom) direction = PathChecker.PathDirection.Down;
+        else if (repere == ReperesManager.Instance.repereTop) direction = PathChecker.PathDirection.Up;
+        else if (repere == ReperesManager.Instance.repereLeft) direction = PathChecker.PathDirection.Left;
         else direction = PathChecker.PathDirection.Right;
     }
 
@@ -100,34 +100,41 @@ public class PathMemory
         return false;
     }
 
-    public bool checkNextMove(int nextMoveRowIndex, int nextMoveColIndex)
+    public bool checkNextMove(int nextMoveRowIndex, int nextMoveColIndex, bool firstMove)
     {
         PathChecker.PathDirection nextMoveDir = getNextMoveDirection(nextMoveRowIndex, nextMoveColIndex);
         bool result = true;
 
-        if (hasBouncedOnWall)
+        PathChecker.PathDirection     dirToCheck;
+             if (hasBouncedOnWall   ) dirToCheck = directionBounce;
+        else if (hasChangedDirection) dirToCheck = direction2;
+        else                          dirToCheck = direction1;
+
+        bool hasJustChangedDir = nextMoveDir != dirToCheck;
+        bool hasJustBouncedOnWall = hasBouncedOnTopBottomWalls(dirToCheck) || hasBouncedOnLeftRightWalls(dirToCheck);
+
+        if (firstMove && hasJustChangedDir && has2Directions && (nextMoveDir == direction2))
         {
-            result = nextMoveDir == directionBounce;
+            PathChecker.PathDirection dir2Tmp = direction2;
+            direction2 = direction1;
+            direction1 = dir2Tmp;
+            hasJustChangedDir = false;
+        }
+
+        if (hasJustBouncedOnWall)
+        {
+            hasBouncedOnWall = true;
+            directionBounce = nextMoveDir;
+            result = true;
+        }
+        else if (hasJustChangedDir && !hasChangedDirection && has2Directions)
+        {
+            hasChangedDirection = true;
+            result = nextMoveDir == direction2;
         }
         else
         {
-            if (hasChangedDirection)
-            {
-                hasBouncedOnWall = hasBouncedOnTopBottomWalls(direction2) || hasBouncedOnLeftRightWalls(direction2);
-                if (hasBouncedOnWall) directionBounce = nextMoveDir;
-                result = hasBouncedOnWall || (nextMoveDir == direction2);
-            }
-            else
-            {
-                hasChangedDirection = nextMoveDir != direction1;
-                hasBouncedOnWall = hasBouncedOnTopBottomWalls(direction1) || hasBouncedOnLeftRightWalls(direction1);
-                if (hasBouncedOnWall) directionBounce = nextMoveDir;
-
-                if (hasChangedDirection)
-                {
-                    result = hasBouncedOnWall || (has2Directions && (nextMoveDir == direction2));
-                }
-            }
+            result = nextMoveDir == dirToCheck;
         }
 
         currentRowIndex = nextMoveRowIndex;

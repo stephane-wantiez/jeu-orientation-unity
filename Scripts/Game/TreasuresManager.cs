@@ -10,15 +10,18 @@ public class TreasuresManager : MonoBehaviour
     private static TreasuresManager _instance;
     public static TreasuresManager Instance { get { return _instance; } }
 
-    public Transform tresorsParent;
-    public GameObject[] tresorPrefabs;
-    public GameObject tresorUiPanel;
-    public UILabel tresorUiRemainingLabel;
-    public GameObject tresorUiDoneButton;
+    public Transform treasureObjectsParent;
+    public GameObject[] treasurePrefabs;
+    public GameObject treasurePlacementUiPanel;
+    public UILabel treasurePlacementUiRemainingLabel;
+    public GameObject treasurePlacementUiDoneButton;
+    public TreasuresUI treasuresGameUi;
 
-    private int nbTreasuresInGame;
     public int nbTreasuresPerPlayer;
     public float treasurePositionZ;
+
+    [HideInInspector]
+    public int nbTreasuresInGame;
 
     private int currentPlayerId;
     private int currentNbTreasuresForPlayer;
@@ -30,26 +33,31 @@ public class TreasuresManager : MonoBehaviour
         currentTreasureId = 0;
     }
 
+    void Start()
+    {
+        GameManager.Instance.OnGameStateChangeEvents += onGameStateChange;
+    }
+
     public void startTresorPlacementForPlayer(int playerId)
     {
         currentPlayerId = playerId;
-        tresorUiPanel.SetActive(false);
+        treasurePlacementUiPanel.SetActive(false);
         PopupManager.Instance.showPopupWithMessage(new LocalizedMessage(LOCKEY_TRESOR_PLACEMENT_MSG, playerId + 1, nbTreasuresPerPlayer), onReadyForTresorPlacement);
     }
 
     public void onReadyForTresorPlacement()
     {
-        tresorUiPanel.SetActive(true);
+        treasurePlacementUiPanel.SetActive(true);
         setCurrentNbTresorsForPlayer(nbTreasuresPerPlayer);
     }
 
     private void setCurrentNbTresorsForPlayer(int value)
     {
         currentNbTreasuresForPlayer = value;
-        LocalizationUtils.FillLabelWithLocalizationKey(tresorUiRemainingLabel, LOCKEY_TRESOR_PLACEMENT_REMAINING, currentNbTreasuresForPlayer);
+        LocalizationUtils.FillLabelWithLocalizationKey(treasurePlacementUiRemainingLabel, LOCKEY_TRESOR_PLACEMENT_REMAINING, currentNbTreasuresForPlayer);
         bool tresorsLeft = currentNbTreasuresForPlayer > 0;
-        tresorUiRemainingLabel.gameObject.SetActive(tresorsLeft);
-        tresorUiDoneButton.SetActive(!tresorsLeft);
+        treasurePlacementUiRemainingLabel.gameObject.SetActive(tresorsLeft);
+        treasurePlacementUiDoneButton.SetActive(!tresorsLeft);
     }
 
     public void placeTresorInCell(BoardCell cell)
@@ -58,10 +66,10 @@ public class TreasuresManager : MonoBehaviour
         {
             Vector3 tresorPosition = cell.transform.position;
             tresorPosition.z = treasurePositionZ;
-            GameObject tresorPrefab = tresorPrefabs[currentTreasureId];
+            GameObject tresorPrefab = treasurePrefabs[currentTreasureId];
             GameObject tresorObject = Instantiate(tresorPrefab, tresorPosition, Quaternion.identity) as GameObject;
             tresorObject.transform.localScale = cell.transform.localScale;
-            tresorObject.transform.parent = tresorsParent;
+            tresorObject.transform.parent = treasureObjectsParent;
             cell.treasure = tresorObject;
             cell.treasurePlayerId = currentPlayerId;
             setCurrentNbTresorsForPlayer(currentNbTreasuresForPlayer-1);
@@ -79,8 +87,8 @@ public class TreasuresManager : MonoBehaviour
 
     public void onTresorPlacementDone()
     {
-        tresorUiPanel.SetActive(false);
-        currentTreasureId = (currentTreasureId + 1) % tresorPrefabs.Length;
+        treasurePlacementUiPanel.SetActive(false);
+        currentTreasureId = (currentTreasureId + 1) % treasurePrefabs.Length;
         PlayersManager.Instance.onPlacementTresorDoneForPlayer();
     }
 
@@ -88,10 +96,21 @@ public class TreasuresManager : MonoBehaviour
     {
         UnityEngine.Object.Destroy(treasure);
         --nbTreasuresInGame;
+        treasuresGameUi.onTreasurePickup();
     }
 
     public bool hasTreasuresLeft()
     {
         return nbTreasuresInGame > 0;
+    }
+
+    private void onGameStateChange(GameManager.GameState newState)
+    {
+        switch (newState)
+        {
+            case GameManager.GameState.Game:
+                treasuresGameUi.onGameStart();
+                break;
+        }
     }
 }

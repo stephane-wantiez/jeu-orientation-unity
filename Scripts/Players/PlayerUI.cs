@@ -2,12 +2,15 @@
 
 public class PlayerUI : MonoBehaviour
 {
-    public const float ENABLED_UI_ALPHA = 1f;
-    public const float DISABLED_UI_ALPHA = 0.4f;
+    public const float ENABLED_PLAYER_UI_ALPHA = 1f;
+    public const float ENABLED_TEAM_UI_ALPHA = 0.6f;
+    public const float DISABLED_PLAYER_UI_ALPHA = 0.3f;
     public const string PLAYER_ID_LABEL_LOCKEY = "player_id";
+    public const string TEAM_ID_LABEL_LOCKEY = "team_id";
 
     public UIPanel playerUiPanel;
     public UILabel playerIdLabel;
+    public UILabel teamIdLabel;
 
     private Player player;
 
@@ -23,17 +26,49 @@ public class PlayerUI : MonoBehaviour
         {
             playerIdLabel.text = Localization.Get(PLAYER_ID_LABEL_LOCKEY);
             playerIdLabel.text = string.Format(playerIdLabel.text, player.id + 1);
+
+            if (player.team != null)
+            {
+                teamIdLabel.text = Localization.Get(TEAM_ID_LABEL_LOCKEY);
+                teamIdLabel.text = string.Format(teamIdLabel.text, player.team.teamId + 1);
+            }
+            else
+            {
+                teamIdLabel.text = "";
+            }
+        }
+        else
+        {
+            playerIdLabel.text = "";
         }
     }
 
-    public void initializeWithPlayer(Player _player)
+    public void initializeWithPlayer(Player inPlayer)
     {
-        player = _player;
+        player = inPlayer;
         initPlayerIdLabel();
     }
 
-    public void onPlayerTurn(bool turn)
+    public void onPlayerTurn(int currentPlayerIndex, int currentTeamIndex)
     {
-        playerUiPanel.alpha = turn ? ENABLED_UI_ALPHA : DISABLED_UI_ALPHA;
+        if (player != null)
+        {
+            if (player.id == currentPlayerIndex)
+            {
+                playerUiPanel.alpha = ENABLED_PLAYER_UI_ALPHA;
+            }
+            else if ((player.team != null) && (player.team.teamId == currentTeamIndex))
+            {
+                playerUiPanel.alpha = ENABLED_TEAM_UI_ALPHA;
+            }
+            else
+            {
+                playerUiPanel.alpha = DISABLED_PLAYER_UI_ALPHA;
+            }
+        }
+        else
+        {
+            playerUiPanel.alpha = 0.0f;
+        }
     }
 }
