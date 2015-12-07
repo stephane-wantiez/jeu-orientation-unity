@@ -17,6 +17,7 @@ public class PlayerUI : MonoBehaviour
     void Start()
     {
         LanguageManager.Instance.OnLanguageChangeEvents += initPlayerIdLabel;
+        PlayersManager.Instance.OnPlayerTurnChangeEvents += onPlayerTurn;
         initPlayerIdLabel();
     }
 
@@ -49,15 +50,15 @@ public class PlayerUI : MonoBehaviour
         initPlayerIdLabel();
     }
 
-    public void onPlayerTurn(int currentPlayerIndex, int currentTeamIndex)
+    public void onPlayerTurn(Player currentPlayer)
     {
         if (player != null)
         {
-            if (player.id == currentPlayerIndex)
+            if (player == currentPlayer)
             {
                 playerUiPanel.alpha = ENABLED_PLAYER_UI_ALPHA;
             }
-            else if ((player.team != null) && (player.team.teamId == currentTeamIndex))
+            else if (player.team == currentPlayer.team)
             {
                 playerUiPanel.alpha = ENABLED_TEAM_UI_ALPHA;
             }

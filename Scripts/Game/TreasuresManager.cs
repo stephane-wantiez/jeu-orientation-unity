@@ -42,7 +42,7 @@ public class TreasuresManager : MonoBehaviour
     {
         currentPlayerId = playerId;
         treasurePlacementUiPanel.SetActive(false);
-        PopupManager.Instance.showPopupWithMessage(new LocalizedMessage(LOCKEY_TRESOR_PLACEMENT_MSG, playerId + 1, nbTreasuresPerPlayer), onReadyForTresorPlacement);
+        PopupManager.ShowCenterPopupWithMessage(onReadyForTresorPlacement, LOCKEY_TRESOR_PLACEMENT_MSG, playerId + 1, nbTreasuresPerPlayer);
     }
 
     public void onReadyForTresorPlacement()

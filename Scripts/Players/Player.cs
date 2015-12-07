@@ -40,6 +40,11 @@ public class Player
         setTurnState(TurnState.FinTour);
     }
 
+    public bool isPlaying()
+    {
+        return turnState != TurnState.FinTour;
+    }
+
     private void checkDiceReperes()
     {
         if (RepereType.getTypeForCurrentGame() == RepereType.TypeEnum.Couleur)
@@ -187,9 +192,6 @@ public class Player
         switch (turnState)
         {
             case TurnState.DebutTour:
-                team.onPlayerActive(this);
-                currentPiece = team.getActivePiece();
-                //DicesManager.Instance.showDices();
                 setTurnState(TurnState.LancementDeReperes);
                 break;
             case TurnState.LancementDeReperes:
@@ -209,16 +211,9 @@ public class Player
                 if (currentPiece != null) currentPiece.moveOnPath(onMovePathDone);
                 break;
             case TurnState.FinTour:
-                if (currentPiece != null) currentPiece.setAsPlaying(false, false);
                 DicesManager.Instance.hideDices();
                 break;
         }
-    }
-
-    public void onChangePiece()
-    {
-        PlayersManager.Instance.onPlayerPathDefined(false);
-        team.changePiece();
     }
 
     public void onCellClick(BoardCell cell)

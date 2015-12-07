@@ -75,7 +75,7 @@ public class DicesManager : MonoBehaviour
     {
         if (display)
         {
-            PopupManager.Instance.showPopupWithMessage(new LocalizedMessage(LOCKEY_PASS_MSG), onPassMessageValidated);
+            PopupManager.Instance.showPopupWithMessage(new LocalizedMessage(LOCKEY_PASS_MSG), PopupManager.PopupPosition.Center, onPassMessageValidated);
         }
     }
 

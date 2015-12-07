@@ -7,6 +7,11 @@ public class PlayersTeam
     public int activePieceIndex;
     public int nbTreasures;
 
+    public string getTeamIdAsStr()
+    {
+        return "" + (teamId + 1);
+    }
+
     public void onPlayerActive(Player player)
     {
         activePieceIndex = -1;
@@ -16,21 +21,20 @@ public class PlayersTeam
             if (players[i] == player)
             {
                 activePieceIndex = i;
-                player.piece.setAsPlaying(true, false);
-            }
-            else
-            {
-                players[i].piece.setAsPlaying(false, true);
             }
         }
     }
 
-    public void changePiece()
+    public void resetTeam()
+    {
+        activePieceIndex = 0;
+        nbTreasures = 0;
+    }
+
+    public void changeActivePlayerPiece()
     {
         if (players.Length == 0) return;
-        if (activePieceIndex >= 0) players[activePieceIndex].piece.setAsPlaying(false, true);
         activePieceIndex = (activePieceIndex + 1) % players.Length;
-        players[activePieceIndex].piece.setAsPlaying(true, false);
     }
 
     public PlayerPiece getActivePiece()

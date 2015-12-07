@@ -20,6 +20,13 @@ public class PlayerPiece
 
     private bool playing = false;
 
+    public void init()
+    {
+        PlayersManager.Instance.OnPlayerTurnChangeEvents += onPlayerTurn;
+        PlayersManager.Instance.OnPlayerPieceChangeEvents += onPlayerPieceChange;
+        setAsPlaying(false, false);
+    }
+
     private void updateIconPosition()
     {
         currentPosition.z = playing ? fixedPositionInZWhenPlaying : fixedPositionInZWhenWaiting;
@@ -34,7 +41,19 @@ public class PlayerPiece
         updateIconPosition();
     }
 
-    public void setAsPlaying(bool inPlaying, bool teamPlaying)
+    public void onPlayerTurn(Player currentPlayer)
+    {
+        bool currentPlayerIsPlaying = this == currentPlayer.team.getActivePiece();
+        bool currentTeamIsPlaying = player.team.teamId == currentPlayer.team.teamId;
+        setAsPlaying(currentPlayerIsPlaying, currentTeamIsPlaying);
+    }
+
+    public void onPlayerPieceChange(Player currentPlayer)
+    {
+        onPlayerTurn(currentPlayer);
+    }
+
+    private void setAsPlaying(bool inPlaying, bool teamPlaying)
     {
         playing = inPlaying;
 

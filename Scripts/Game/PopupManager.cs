@@ -5,32 +5,61 @@ public class PopupManager : MonoBehaviour
 {
     public static PopupManager Instance { get; private set; }
 
-    public UIPanel popupPanel;
-    public UILabel popupLabel;
+    public enum PopupPosition { Center, Right };
+
+    public UIPanel popupCenterPanel;
+    public UILabel popupCenterLabel;
+    public UIPanel popupRightPanel;
+    public UILabel popupRightLabel;
 
     private DelegateUtils.OnSimpleEvent onPopupClosed;
 
     void Awake()
     {
         Instance = this;
-        popupPanel.gameObject.SetActive(false);
+        popupCenterPanel.gameObject.SetActive(false);
+        popupRightPanel.gameObject.SetActive(false);
     }
 
-    public void showPopupWithMessage(string message, DelegateUtils.OnSimpleEvent onPopupClosedCallback = null)
+    public void showPopupWithMessage(string message, PopupPosition position, DelegateUtils.OnSimpleEvent onPopupClosedCallback = null)
     {
-        popupLabel.text = message;
+        if (position == PopupPosition.Center)
+        {
+            popupCenterLabel.text = message;
+            popupCenterPanel.gameObject.SetActive(true);
+        }
+        else
+        {
+            popupRightLabel.text = message;
+            popupRightPanel.gameObject.SetActive(true);
+        }
         onPopupClosed = onPopupClosedCallback;
-        popupPanel.gameObject.SetActive(true);
     }
 
-    public void showPopupWithMessage(LocalizedMessage localizedMessage, DelegateUtils.OnSimpleEvent onPopupClosedCallback = null)
+    public void showPopupWithMessage(LocalizedMessage localizedMessage, PopupPosition position, DelegateUtils.OnSimpleEvent onPopupClosedCallback = null)
     {
-        showPopupWithMessage(localizedMessage.getLocalizedMessage(), onPopupClosedCallback);
+        showPopupWithMessage(localizedMessage.getLocalizedMessage(), position, onPopupClosedCallback);
     }
 
-    public void closePopup()
+    public void closePopupCenter()
     {
-        popupPanel.gameObject.SetActive(false);
+        popupCenterPanel.gameObject.SetActive(false);
         if (onPopupClosed != null) onPopupClosed();
+    }
+
+    public void closePopupRight()
+    {
+        popupRightPanel.gameObject.SetActive(false);
+        if (onPopupClosed != null) onPopupClosed();
+    }
+
+    public static void ShowCenterPopupWithMessage(DelegateUtils.OnSimpleEvent onPopupClosedCallback, string messageKey, params object[] messageParameters)
+    {
+        Instance.showPopupWithMessage(new LocalizedMessage(messageKey, messageParameters), PopupManager.PopupPosition.Center, onPopupClosedCallback);
+    }
+
+    public static void ShowRightPopupWithMessage(DelegateUtils.OnSimpleEvent onPopupClosedCallback, string messageKey, params object[] messageParameters)
+    {
+        Instance.showPopupWithMessage(new LocalizedMessage(messageKey, messageParameters), PopupManager.PopupPosition.Right, onPopupClosedCallback);
     }
 }

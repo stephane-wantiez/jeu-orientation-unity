@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 
 public class GameManager : MonoBehaviour
 {
@@ -52,19 +53,36 @@ public class GameManager : MonoBehaviour
         switch (_state)
         {
             case GameState.BoardGeneration:
-            {
-                BoardGenerator.Instance.generateBoard();
-                ReperesManager.Instance.generateReperes();
-                DicesManager.Instance.setColorsOfChoiceButtons();
-                State = GameState.PlaceTreasures;
-                break;
-            }
+                {
+                    BoardGenerator.Instance.generateBoard();
+                    ReperesManager.Instance.generateReperes();
+                    DicesManager.Instance.setColorsOfChoiceButtons();
+                    State = GameState.PlaceTreasures;
+                    break;
+                }
             case GameState.GameOver:
-            {
-                PlayersTeam victoriousTeam = PlayersManager.Instance.getVictoriousTeam();
-                PopupManager.Instance.showPopupWithMessage(new LocalizedMessage("victory", (victoriousTeam.teamId + 1)));
-                break;
-            }
+                {
+                    IList<PlayersTeam> victoriousTeams = PlayersManager.Instance.getVictoriousTeams();
+                    if (victoriousTeams.Count == 1)
+                    {
+                        PopupManager.ShowCenterPopupWithMessage(onGameOverValidated, "victory_oneteam", victoriousTeams[0].getTeamIdAsStr());
+                    }
+                    else if (victoriousTeams.Count > 1)
+                    {
+                        string firstVictTeams = "";
+
+                        for (int i = 0; i < victoriousTeams.Count - 1; ++i)
+                        {
+                            if (i != 0) firstVictTeams += ", ";
+                            firstVictTeams += victoriousTeams[i].getTeamIdAsStr();
+                        }
+
+                        string lastVictTeam = "" + victoriousTeams[victoriousTeams.Count - 1].getTeamIdAsStr();
+
+                        PopupManager.ShowCenterPopupWithMessage(onGameOverValidated, "victory_manyteams", firstVictTeams, lastVictTeam);
+                    }
+                    break;
+                }
         }
     }
 
@@ -76,5 +94,10 @@ public class GameManager : MonoBehaviour
                 TreasuresManager.Instance.placeTresorInCell(cell);
                 break;
         }
+    }
+
+    private void onGameOverValidated()
+    {
+        Application.LoadLevel(Application.loadedLevelName);
     }
 }
