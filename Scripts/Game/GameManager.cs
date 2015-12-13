@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
-using System.Collections;
 using System.Collections.Generic;
+using SceneManager = UnityEngine.SceneManagement.SceneManager;
 
 public class GameManager : MonoBehaviour
 {
@@ -98,6 +98,6 @@ public class GameManager : MonoBehaviour
 
     private void onGameOverValidated()
     {
-        Application.LoadLevel(Application.loadedLevelName);
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 }

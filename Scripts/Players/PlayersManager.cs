@@ -35,6 +35,7 @@ public class PlayersManager : MonoBehaviour
 
     public UIPanel changePiecePanel;
     public UIPanel submitPathPanel;
+    public UIPanel passButtonPanel;
     public UIPanel infosUIPanel;
     public UILabel infosUILabel;
 
@@ -116,6 +117,7 @@ public class PlayersManager : MonoBehaviour
     {
         bool canChangePiece = getCurrentPlayer().team.canChangePiece();
         changePiecePanel.gameObject.SetActive(canChangePiece);
+        onPlayerPathDefined(false);
     }
 
     public void initializeTeams()
@@ -327,6 +329,12 @@ public class PlayersManager : MonoBehaviour
     public void onPlayerPathDefined(bool pathValid)
     {
         submitPathPanel.gameObject.SetActive(pathValid);
+        passButtonPanel.gameObject.SetActive(!pathValid);
+    }
+
+    public void onPassTurn()
+    {
+        getCurrentPlayer().onPassTurn();
     }
 
     public void onSubmitPlayerPath()
@@ -338,6 +346,7 @@ public class PlayersManager : MonoBehaviour
     {
         changePiecePanel.gameObject.SetActive(false);
         submitPathPanel.gameObject.SetActive(false);
+        passButtonPanel.gameObject.SetActive(false);
     }
 
     public IList<PlayersTeam> getVictoriousTeams()

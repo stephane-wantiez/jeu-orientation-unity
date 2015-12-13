@@ -15,6 +15,13 @@ public class PathChecker : MonoBehaviour
         Instance = this;
     }
 
+    private bool isOverlappingPiece(PlayerPiece piece)
+    {
+        int nbMoves = piece.moveCells.Count;
+        if (nbMoves == 0) return false;
+        return piece.moveCells[nbMoves - 1].piece != null;
+    }
+
     private bool hasValidPathDistance(Player player, PlayerPiece piece)
     {
         return piece.moveCells.Count == player.targetDistance;
@@ -119,10 +126,11 @@ public class PathChecker : MonoBehaviour
         return true;
     }
 
-    public enum CheckResult { ValidPath, WrongDistance, IncoherentPath, WrongDirection, OtherError }
+    public enum CheckResult { ValidPath, PieceOverlapping, WrongDistance, IncoherentPath, WrongDirection, OtherError }
 
     public CheckResult isPathValidForPlayerPiece(Player player, PlayerPiece piece)
     {
+        if (isOverlappingPiece(piece)) return CheckResult.PieceOverlapping;
         if (!hasValidPathDistance(player, piece)) return CheckResult.WrongDistance;
         if (!hasValidCoherentPath(player, piece)) return CheckResult.IncoherentPath;
         PathMemory pathMemory = new PathMemory();

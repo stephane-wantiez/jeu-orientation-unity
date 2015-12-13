@@ -117,6 +117,7 @@ public class PlayerPiece
     private void onMoveOnPathDone(Action onMoveDone, BoardCell lastCell)
     {
         moveCells.Clear();
+        currentCell.piece = null;
         setCurrentCell(lastCell);
         onMoveDone();
     }

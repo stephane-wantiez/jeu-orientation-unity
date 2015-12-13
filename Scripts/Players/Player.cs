@@ -249,6 +249,11 @@ public class Player
         setTurnState(TurnState.Deplacement);
     }
 
+    public void onPassTurn()
+    {
+        PlayersManager.Instance.onPlayerTurnDone();
+    }
+
     private void onMovePathDone()
     {
         PlayersManager.Instance.onPlayerTurnDone();
