@@ -164,7 +164,7 @@ public class Player
 
     private void onDiceDistanceDone()
     {
-        setTurnState(GameManager.Instance.checkOrientation ? TurnState.LancementDeOrientation : TurnState.ChoixChemin);
+        setTurnState(GameSettings.Instance.CheckOrientation ? TurnState.LancementDeOrientation : TurnState.ChoixChemin);
     }
 
     private void launchDiceForOrientation()
@@ -229,7 +229,7 @@ public class Player
 
     private void checkMove(PlayerPiece currentPiece)
     {
-        if (GameManager.Instance.gameType == GameManager.GameType.Simple)
+        if (GameSettings.Instance.GameType == GameManager.GameType.Simple)
         {
             PathChecker.CheckResult pathCheckRes = PathChecker.Instance.isPathValidForPlayerPiece(this, currentPiece);
             bool pathValid = pathCheckRes == PathChecker.CheckResult.ValidPath;

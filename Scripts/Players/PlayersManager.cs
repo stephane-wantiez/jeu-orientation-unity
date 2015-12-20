@@ -5,9 +5,11 @@ using UnityEngine;
 
 public class PlayersManager : MonoBehaviour
 {
-    public const int NB_PLAYERS_MIN = 1;
-    public const int NB_PLAYERS_MAX = 5;
+    public const int NB_PLAYERS_PER_TEAM_MIN = 1;
+    public const int NB_PLAYERS_PER_TEAM_DEF = 2;
+    public const int NB_PLAYERS_PER_TEAM_MAX = 5;
     public const int NB_TEAMS_MIN = 1;
+    public const int NB_TEAMS_DEF = 2;
     public const int NB_TEAMS_MAX = 3;
     public const string LOCKEY_INFOS = "move_infos";
     public const string LOCKEY_PLAYER_TURN_START = "player_turn";
@@ -21,10 +23,8 @@ public class PlayersManager : MonoBehaviour
     public delegate void OnPlayerPieceChange(Player inCurrentPlayer);
     public event OnPlayerPieceChange OnPlayerPieceChangeEvents;
 
-    [Range(NB_TEAMS_MIN, NB_TEAMS_MAX)]
-    public int nbTeams;
-    [Range(NB_PLAYERS_MIN, NB_PLAYERS_MAX)]
-    public int nbPlayersPerTeam;
+    private int nbTeams;
+    private int nbPlayersPerTeam;
 
     public float playerFixedPositionInZWhenWaiting;
     public float playerFixedPositionInZWhenPlaying;
@@ -53,6 +53,8 @@ public class PlayersManager : MonoBehaviour
     void Awake()
     {
         Instance = this;
+        nbPlayersPerTeam = GameSettings.Instance.NbPlayersPerTeam;
+        nbTeams = GameSettings.Instance.NbTeams;
     }
 
     void Start()
@@ -73,7 +75,7 @@ public class PlayersManager : MonoBehaviour
     {
         if ((playersIcons != null) && (playersIcons.Length != 0))
         {
-            bool checkOrientation = GameManager.Instance.checkOrientation;
+            bool checkOrientation = GameSettings.Instance.CheckOrientation;
             PlayerIcon[] validPlayersIcons = Array.FindAll(playersIcons, p => p.orientedIcon == checkOrientation);
 
             if (validPlayersIcons.Length != 0)

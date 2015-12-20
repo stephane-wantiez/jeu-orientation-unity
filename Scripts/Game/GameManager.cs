@@ -10,8 +10,7 @@ public class GameManager : MonoBehaviour
     public const int MAX_DISTANCE = 5;
 
     public enum GameType { Simple, Advanced }
-    public GameType gameType;
-    public bool checkOrientation;
+    public static GameType GAME_TYPE_DEF = GameType.Simple;
 
     public enum GameState { GameConfiguration, BoardGeneration, PlaceTreasures, ChoosePieceStartup, Game, GameOver }
     private GameState _state;

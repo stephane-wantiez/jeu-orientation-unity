@@ -5,18 +5,21 @@ using UnityEngine;
 public class BoardGenerator : MonoBehaviour
 {
     public const int BOARD_MIN_NB_ROWS = 10;
+    public const int BOARD_DEF_NB_ROWS = 17;
     public const int BOARD_MAX_NB_ROWS = 20;
     public const int BOARD_MIN_NB_COLS = 10;
+    public const int BOARD_DEF_NB_COLS = 17;
     public const int BOARD_MAX_NB_COLS = 20;
 
     public static BoardGenerator Instance { get; private set; }
 
     public enum IndexType { Letter, Number }
 
-    [Range(BOARD_MIN_NB_ROWS,BOARD_MAX_NB_ROWS)]
+    [HideInInspector]
     public int nbRows;
-    [Range(BOARD_MIN_NB_COLS, BOARD_MAX_NB_COLS)]
+    [HideInInspector]
     public int nbColumns;
+
     [Range(0f,0.5f)]
     public float boardStartInScreenWidthProportion;
     [Range(0.5f, 1f)]
@@ -61,6 +64,8 @@ public class BoardGenerator : MonoBehaviour
     void Awake()
     {
         Instance = this;
+        nbRows = GameSettings.Instance.NbRowsInBoard;
+        nbColumns = GameSettings.Instance.NbColumnsInBoard;
         initialize();
     }
 

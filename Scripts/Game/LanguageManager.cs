@@ -47,14 +47,14 @@ public class LanguageManager : MonoBehaviour
         //Debug.Log("Changing language to " + lang);
         _currentLanguage = lang;
         _currentLanguageInitialized = true;
-        PlayerPreferences.Instance.setLanguage(lang);
+        GameSettings.Instance.Language = lang;
         Localization.language = lang.ToString();
         if (OnLanguageChangeEvents != null) OnLanguageChangeEvents();
     }
 
     private void initLanguage()
     {
-        Language lang = PlayerPreferences.Instance.getLanguage();
+        Language lang = GameSettings.Instance.Language;
         changeLanguageTo(lang);
     }
 
@@ -66,7 +66,9 @@ public class LanguageManager : MonoBehaviour
 
     public static Language getLanguageFollowing(Language lang, int increment)
     {
-        return (Language)(((int)lang + increment) % NB_LANG);
+        int langValue = ((int)lang + increment) % NB_LANG;
+        while (langValue < 0) langValue += NB_LANG;
+        return (Language)langValue;
     }
 
     public void setCurrentAsNextLanguage()
