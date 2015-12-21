@@ -97,6 +97,6 @@ public class GameManager : MonoBehaviour
 
     private void onGameOverValidated()
     {
-        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+        SceneManager.LoadScene("setup");
     }
 }

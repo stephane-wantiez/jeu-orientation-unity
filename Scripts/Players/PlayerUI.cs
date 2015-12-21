@@ -41,6 +41,7 @@ public class PlayerUI : MonoBehaviour
         else
         {
             playerIdLabel.text = "";
+            teamIdLabel.text = "";
         }
     }
 

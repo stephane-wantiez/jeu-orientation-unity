@@ -1,6 +1,6 @@
 ﻿using UnityEngine.UI;
 
-public class EnumLabel : GameSettingsUiTextLocalizer
+public class GameSettingsUiEnumLocalizer : GameSettingsUiTextLocalizer
 {
     private int _value;
 

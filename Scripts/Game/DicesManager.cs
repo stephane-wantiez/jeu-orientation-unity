@@ -148,6 +148,7 @@ public class DicesManager : MonoBehaviour
         bool diceCardPass2Flag = repereType2 == RepereType.TypePointCardinal.Passe;
 
         diceCardinal.SetActive(true);
+        diceCardinalValue.gameObject.SetActive(!diceCardChooseFlag && !diceCardPass1Flag && !diceCardPass2Flag);
         diceCardinalChoose.SetActive(diceCardChooseFlag);
         diceCardinalChooseWindow.SetActive(diceCardChooseFlag);
         diceCardinalPass.SetActive(diceCardPass1Flag || diceCardPass2Flag);

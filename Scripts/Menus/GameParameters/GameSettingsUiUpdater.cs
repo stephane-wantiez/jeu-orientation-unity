@@ -16,6 +16,15 @@ public class GameSettingsUiUpdater : MonoBehaviour
 
     private void refreshComponents()
     {
+        bool componentFound = false;
+        if (!componentFound) refreshSliderComponent(ref componentFound);
+        if (!componentFound)   refreshEnumComponent(ref componentFound);
+        if (!componentFound) refreshToggleComponent(ref componentFound);
+        initialized = true;
+    }
+
+    private void refreshSliderComponent(ref bool componentFound)
+    {
         Slider sliderComponent = GetComponent<Slider>();
         if (sliderComponent != null)
         {
@@ -30,9 +39,14 @@ public class GameSettingsUiUpdater : MonoBehaviour
                                                 TypeConverters.ConvertAsFloat,
                                                 TypeConverters.ConvertAsFloat);
             sliderComponent.value = MathUtils.Clamp(sliderMinValue, sliderValue, sliderMaxValue);
-        }
 
-        EnumLabel enumLabelComponent = GetComponent<EnumLabel>();
+            componentFound = true;
+        }
+    }
+
+    private void refreshEnumComponent(ref bool componentFound)
+    {
+        GameSettingsUiEnumLocalizer enumLabelComponent = GetComponent<GameSettingsUiEnumLocalizer>();
         if (enumLabelComponent != null)
         {
             int enumValue = enumLabelComponent.Value;
@@ -41,9 +55,23 @@ public class GameSettingsUiUpdater : MonoBehaviour
                                               TypeConverters.ConvertAsInt,
                                               TypeConverters.ConvertAsInt);
             enumLabelComponent.Value = enumValue;
+            componentFound = true;
         }
+    }
 
-        initialized = true;
+    private void refreshToggleComponent(ref bool componentFound)
+    {
+        Toggle toggleComponent = GetComponent<Toggle>();
+        if (toggleComponent)
+        {
+            bool toggleValue = toggleComponent.isOn;
+            InitComponentValue(ref toggleValue, TypeConverters.ConvertAsBool,
+                                                TypeConverters.ConvertAsBool,
+                                                TypeConverters.ConvertAsBool,
+                                                TypeConverters.ConvertAsBool);
+            toggleComponent.isOn = toggleValue;
+            componentFound = true;
+        }
     }
 
     private void InitComponentValue<T>(ref T value, Func<string, T> valueFromString, Func<int, T> valueFromInt, Func<float, T> valueFromFloat, Func<bool, T> valueFromBool)
