@@ -118,6 +118,7 @@ public class PathMemory
             PathChecker.PathDirection dir2Tmp = direction2;
             direction2 = direction1;
             direction1 = dir2Tmp;
+            dirToCheck = direction1;
             hasJustChangedDir = false;
         }
 

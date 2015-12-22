@@ -65,13 +65,16 @@ public class Player
 
     private void launchDiceReperes()
     {
-        int repereRandomIndex = Random.Range(0, RepereType.NB_TYPE_TOUS);
-        bool repereRegulier = repereRandomIndex < RepereType.NB_TYPE_REGULIER;
-
-        targetRepere1 = repereRegulier ? ReperesManager.Instance.getRepereTypeWithIndex(repereRandomIndex) : null;
+//         int repereRandomIndex = Random.Range(0, RepereType.NB_TYPE_TOUS);
+//         bool repereRegulier = repereRandomIndex < RepereType.NB_TYPE_REGULIER;
+//         targetRepere1 = repereRegulier ? ReperesManager.Instance.getRepereTypeWithIndex(repereRandomIndex) : null;
 
         if (RepereType.getTypeForCurrentGame() == RepereType.TypeEnum.Couleur)
         {
+            int repereRandomIndex = Random.Range(0, RepereType.NB_TYPE_TOUS);
+            bool repereRegulier = repereRandomIndex < RepereType.NB_TYPE_REGULIER;
+            targetRepere1 = repereRegulier ? ReperesManager.Instance.getRepereTypeWithIndex(repereRandomIndex) : null;
+
             targetRepere1IsTreasure = false;
             RepereType.TypeCouleur repereType;
             Color repereColor;
@@ -87,7 +90,7 @@ public class Player
                 repereColor = RepereType.getTypeCouleurValue(repereType);
             }
 
-            DicesManager.Instance.setDiceColorForRepere(repereType, repereColor);
+            DicesManager.Instance.setDiceColorForRepere(repereType, repereColor, checkDiceReperes);
         }
         else
         {
@@ -95,6 +98,10 @@ public class Player
             RepereType.TypePointCardinal repereType2;
             string repereInfo1;
             string repereInfo2;
+
+            int repereRandomIndex = Random.Range(0, RepereType.NB_TYPE_TOUS-1);
+            bool repereRegulier = repereRandomIndex < RepereType.NB_TYPE_REGULIER;
+            targetRepere1 = repereRegulier ? ReperesManager.Instance.getRepereTypeWithIndex(repereRandomIndex) : null;
 
             if (repereRegulier)
             {
@@ -124,10 +131,8 @@ public class Player
                 repereInfo2 = RepereType.getTypePointCardinalValue(repereType2, false);
             }
 
-            DicesManager.Instance.setDiceCardinalForReperes(repereType1, repereType2, repereInfo1, repereInfo2);
+            DicesManager.Instance.setDiceCardinalForReperes(repereType1, repereType2, repereInfo1, repereInfo2, checkDiceReperes);
         }
-        
-        checkDiceReperes();
     }
 
     public void setDiceRepere1WithIndex(int index)
@@ -150,10 +155,8 @@ public class Player
 
     private void launchDiceForDistance()
     {
-        targetDistance = Random.Range(1, GameManager.MAX_DISTANCE + 2);
-        bool chooseDistance = (targetDistance == GameManager.MAX_DISTANCE + 1);
-        DicesManager.Instance.setDiceDistance(targetDistance);
-        if (!chooseDistance) onDiceDistanceDone();
+        targetDistance = Random.Range(1, GameManager.MAX_DISTANCE + 2); // Max+1 is Choose flag
+        DicesManager.Instance.setDiceDistance(targetDistance, onDiceDistanceDone);
     }
 
     public void setDiceDistance(int distance)
@@ -170,14 +173,21 @@ public class Player
     private void launchDiceForOrientation()
     {
         targetOrientation = Orientation.getRandomOrientation();
-        DicesManager.Instance.setDiceOrientation(targetOrientation);
-        if (targetOrientation.isRegularOrientation()) onDiceOrientationDone();
+        DicesManager.Instance.setDiceOrientation(targetOrientation, checkDiceOrientation);
     }
 
     public void setDiceOrientation(Orientation orientation)
     {
         targetOrientation = orientation;
         onDiceOrientationDone();
+    }
+
+    private void checkDiceOrientation()
+    {
+        if (targetOrientation.isRegularOrientation())
+        {
+            onDiceOrientationDone();
+        }
     }
 
     private void onDiceOrientationDone()
@@ -195,6 +205,7 @@ public class Player
                 setTurnState(TurnState.LancementDeReperes);
                 break;
             case TurnState.LancementDeReperes:
+                DicesManager.Instance.resetDices();
                 launchDiceReperes();
                 break;
             case TurnState.LancementDeDistance:
@@ -211,7 +222,7 @@ public class Player
                 if (currentPiece != null) currentPiece.moveOnPath(onMovePathDone);
                 break;
             case TurnState.FinTour:
-                DicesManager.Instance.hideDices();
+                DicesManager.Instance.resetDices();
                 break;
         }
     }
@@ -229,19 +240,16 @@ public class Player
 
     private void checkMove(PlayerPiece currentPiece)
     {
-        if (GameSettings.Instance.GameType == GameManager.GameType.Simple)
+        PathChecker.CheckResult pathCheckRes = PathChecker.Instance.isPathValidForPlayerPiece(this, currentPiece);
+        bool pathValid = pathCheckRes == PathChecker.CheckResult.ValidPath;
+        currentPiece.showValidPath(pathValid);
+        Debug.Log("PATH CHECKER - Res: " + pathCheckRes.ToString() + " - " + currentPiece.toDebugStr());
+        if (pathValid)
         {
-            PathChecker.CheckResult pathCheckRes = PathChecker.Instance.isPathValidForPlayerPiece(this, currentPiece);
-            bool pathValid = pathCheckRes == PathChecker.CheckResult.ValidPath;
-            currentPiece.showValidPath(pathValid);
-            Debug.Log("PATH CHECKER - Res: " + pathCheckRes.ToString() + " - " + currentPiece.toDebugStr());
-            if (pathValid)
-            {
-                PathChecker.Instance.sortPath(currentPiece);
-                Debug.Log("SORTED PATH - " + currentPiece.toDebugStr());
-            }
-            PlayersManager.Instance.onPlayerPathDefined(pathValid);
+            PathChecker.Instance.sortPath(currentPiece);
+            Debug.Log("SORTED PATH - " + currentPiece.toDebugStr());
         }
+        PlayersManager.Instance.onPlayerPathDefined(pathValid);
     }
 
     public void onSubmitPath()

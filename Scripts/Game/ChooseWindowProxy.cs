@@ -18,13 +18,13 @@ public class ChooseWindowProxy : MonoBehaviour
     private void chooseOrientation(Orientation.OrientationType value)
     {
         Orientation orientation = new Orientation(value);
-        DicesManager.Instance.setDiceOrientation(orientation);
+        DicesManager.Instance.setDiceOrientation(orientation, DicesManager.Instance.getActionWhenCurrentMenuClosed());
         PlayersManager.Instance.getCurrentPlayer().setDiceOrientation(orientation);
     }
 
     private void chooseDistance(int distance)
     {
-        DicesManager.Instance.setDiceDistance(distance);
+        DicesManager.Instance.setDiceDistance(distance, DicesManager.Instance.getActionWhenCurrentMenuClosed());
         PlayersManager.Instance.getCurrentPlayer().setDiceDistance(distance);
     }
 

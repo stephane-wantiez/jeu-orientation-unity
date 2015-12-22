@@ -53,6 +53,12 @@ public class PopupManager : MonoBehaviour
         if (onPopupClosed != null) onPopupClosed();
     }
 
+    public void closePopup()
+    {
+        closePopupCenter();
+        closePopupRight();
+    }
+
     public static void ShowCenterPopupWithMessage(DelegateUtils.OnSimpleEvent onPopupClosedCallback, string messageKey, params object[] messageParameters)
     {
         Instance.showPopupWithMessage(new LocalizedMessage(messageKey, messageParameters), PopupManager.PopupPosition.Center, onPopupClosedCallback);

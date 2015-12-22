@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using System;
 using System.Collections;
 
 public class DicesManager : MonoBehaviour
@@ -34,6 +35,7 @@ public class DicesManager : MonoBehaviour
 
     private string diceCardinal1Value;
     private string diceCardinal2Value;
+    private Action actionWhenCurrentMenuClosed;
 
     void Awake()
     {
@@ -42,46 +44,42 @@ public class DicesManager : MonoBehaviour
 
     void Start()
     {
-        hideDices();
+        resetDices();
     }
 
-    public void hideDices()
+    public void resetDices()
     {
         diceColor.SetActive(false);
+        diceColorChooseWindow.SetActive(false);
         diceCardinal.SetActive(false);
+        diceCardinalChooseWindow.SetActive(false);
         diceDistance.SetActive(false);
+        diceDistanceChooseWindow.SetActive(false);
         diceOrientation.SetActive(false);
+        diceOrientationChooseWindow.SetActive(false);
+        diceCardinal1Value = "";
+        diceCardinal2Value = "";
+        actionWhenCurrentMenuClosed = null;
     }
 
-    /*public void showDices()
+    public Action getActionWhenCurrentMenuClosed()
     {
-        hideDices();
+        return actionWhenCurrentMenuClosed;
+    }
 
-        diceDistance.SetActive(true);
-        if (GameManager.Instance.checkOrientation) diceOrientation.SetActive(true);
-
-        if (GameManager.Instance.gameType == GameManager.GameType.Simple)
-        {
-            diceColor.SetActive(true);
-            setColorsOfChoiceButtons();
-        }
-        else // type is Advanced
-        {
-            diceCardinal.SetActive(true);
-        }
-    }*/
-
-    public void displayPassMessage(bool display = true)
+    public void displayPassMessage()
     {
-        if (display)
-        {
-            PopupManager.Instance.showPopupWithMessage(new LocalizedMessage(LOCKEY_PASS_MSG), PopupManager.PopupPosition.Center, onPassMessageValidated);
-        }
+        PopupManager.Instance.showPopupWithMessage(new LocalizedMessage(LOCKEY_PASS_MSG), PopupManager.PopupPosition.Center, onPassMessageValidated);
     }
 
     public void onPassMessageValidated()
     {
         PlayersManager.Instance.onPlayerTurnDone();
+
+        if (actionWhenCurrentMenuClosed != null)
+        {
+            actionWhenCurrentMenuClosed();
+        }
     }
 
     private void setColorOfChoiceButton(UIButton button, Color color)
@@ -103,7 +101,7 @@ public class DicesManager : MonoBehaviour
         }
     }
 
-    public void setDiceColorForRepere(RepereType.TypeCouleur repereType, Color repereColor)
+    public void setDiceColorForRepere(RepereType.TypeCouleur repereType, Color repereColor, Action actionWhenDone)
     {
         bool diceColorChooseFlag = repereType == RepereType.TypeCouleur.Multiple;
         bool diceColorPassFlag = repereType == RepereType.TypeCouleur.Passe;
@@ -115,13 +113,25 @@ public class DicesManager : MonoBehaviour
         diceColorChooseWindow.SetActive(diceColorChooseFlag);
         diceColorPass.SetActive(diceColorPassFlag);
 
-        displayPassMessage(diceColorPassFlag);
+        if (diceColorPassFlag)
+        {
+            actionWhenCurrentMenuClosed = actionWhenDone;
+            displayPassMessage();
+        }
+        else if (diceColorChooseFlag)
+        {
+            actionWhenCurrentMenuClosed = actionWhenDone;
+        }
+        else if (actionWhenDone != null)
+        {
+            actionWhenDone();
+        }
     }
 
     public void onChosenRepereColorWithIndex(int index)
     {
         RepereType repere = ReperesManager.Instance.getRepereTypeWithIndex(index);
-        setDiceColorForRepere(repere.typeCouleur, repere.getTypeCouleurValue());
+        setDiceColorForRepere(repere.typeCouleur, repere.getTypeCouleurValue(), actionWhenCurrentMenuClosed);
     }
 
     private void setDiceCardinalLabel(string repere1, string repere2)
@@ -137,7 +147,7 @@ public class DicesManager : MonoBehaviour
         diceCardinalValue.text = cardValue;
     }
 
-    public void setDiceCardinalForReperes(RepereType.TypePointCardinal repereType1, RepereType.TypePointCardinal repereType2, string card1Value, string card2Value)
+    public void setDiceCardinalForReperes(RepereType.TypePointCardinal repereType1, RepereType.TypePointCardinal repereType2, string card1Value, string card2Value, Action actionWhenDone)
     {
         setDiceCardinalLabel(card1Value, card2Value);
         diceCardinal1Value = card1Value;
@@ -149,10 +159,23 @@ public class DicesManager : MonoBehaviour
 
         diceCardinal.SetActive(true);
         diceCardinalValue.gameObject.SetActive(!diceCardChooseFlag && !diceCardPass1Flag && !diceCardPass2Flag);
-        diceCardinalChoose.SetActive(diceCardChooseFlag);
-        diceCardinalChooseWindow.SetActive(diceCardChooseFlag);
+        diceCardinalChoose.SetActive(diceCardChooseFlag && !diceCardPass1Flag && !diceCardPass2Flag);
+        diceCardinalChooseWindow.SetActive(diceCardChooseFlag && !diceCardPass1Flag && !diceCardPass2Flag);
         diceCardinalPass.SetActive(diceCardPass1Flag || diceCardPass2Flag);
-        displayPassMessage(diceCardPass1Flag || diceCardPass2Flag);
+
+        if (diceCardPass1Flag || diceCardPass2Flag)
+        {
+            actionWhenCurrentMenuClosed = actionWhenDone;
+            displayPassMessage();
+        }
+        else if (diceCardChooseFlag)
+        {
+            actionWhenCurrentMenuClosed = actionWhenDone;
+        }
+        else if (actionWhenDone != null)
+        {
+            actionWhenDone();
+        }
     }
 
     public void onChosenRepereCardinal(RepereType.TypePointCardinal cardinalType)
@@ -164,9 +187,15 @@ public class DicesManager : MonoBehaviour
         diceCardinalChoose.SetActive(false);
         diceCardinalChooseWindow.SetActive(false);
         diceCardinalPass.SetActive(false);
+        diceCardinalValue.gameObject.SetActive(true);
+
+        if (actionWhenCurrentMenuClosed != null)
+        {
+            actionWhenCurrentMenuClosed();
+        }
     }
 
-    public void setDiceDistance(int distance)
+    public void setDiceDistance(int distance, Action actionWhenDone)
     {
         bool chooseDistance = distance == GameManager.MAX_DISTANCE + 1;
         if (!chooseDistance) diceDistanceValue.text = distance.ToString();
@@ -175,14 +204,23 @@ public class DicesManager : MonoBehaviour
         diceDistanceValue.gameObject.SetActive(!chooseDistance);
         diceDistanceChoose.SetActive(chooseDistance);
         diceDistanceChooseWindow.SetActive(chooseDistance);
+
+        if (chooseDistance)
+        {
+            actionWhenCurrentMenuClosed = actionWhenDone;
+        }
+        else if (actionWhenDone != null)
+        {
+            actionWhenDone();
+        }
     }
 
-    public void setDiceOrientation(Orientation chosenOrientation)
+    public void setDiceOrientation(Orientation chosenOrientation, Action actionWhenDone)
     {
         diceOrientationValue.text = chosenOrientation.getTypeValue();
 
         bool diceOrientationChooseFlag = chosenOrientation.type == Orientation.OrientationType.Choose;
-        bool diceOrientationPassFlag = chosenOrientation.type == Orientation.OrientationType.Pass;
+        bool diceOrientationPassFlag   = chosenOrientation.type == Orientation.OrientationType.Pass;
 
         diceOrientation.SetActive(true);
         diceOrientationValue.gameObject.SetActive(!diceOrientationChooseFlag && !diceOrientationPassFlag);
@@ -190,6 +228,18 @@ public class DicesManager : MonoBehaviour
         diceOrientationChooseWindow.SetActive(diceOrientationChooseFlag);
         diceOrientationPass.SetActive(diceOrientationPassFlag);
 
-        displayPassMessage(diceOrientationPassFlag);
+        if (diceOrientationPassFlag)
+        {
+            actionWhenCurrentMenuClosed = actionWhenDone;
+            displayPassMessage();
+        }
+        else if (diceOrientationChooseFlag)
+        {
+            actionWhenCurrentMenuClosed = actionWhenDone;
+        }
+        else if (actionWhenDone != null)
+        {
+            actionWhenDone();
+        }
     }
 }

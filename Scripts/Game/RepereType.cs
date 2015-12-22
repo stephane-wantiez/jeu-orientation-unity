@@ -34,7 +34,7 @@ public class RepereType : MonoBehaviour
 
     public static TypeEnum getTypeForCurrentGame()
     {
-        if (GameSettings.Instance.GameType == GameManager.GameType.Simple)
+        if (GameSettings.Instance.GameType == GameManager.GameType.OrientColor)
         {
             return TypeEnum.Couleur;
         }

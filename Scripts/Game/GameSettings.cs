@@ -44,7 +44,7 @@ public class GameSettings
         minMaxIntValues.Add(NB_COLS_IN_BOARD,    new int[2] { BoardGenerator.BOARD_MIN_NB_COLS,       BoardGenerator.BOARD_MAX_NB_COLS });
         minMaxIntValues.Add(NB_PLAYERS_PER_TEAM, new int[2] { PlayersManager.NB_PLAYERS_PER_TEAM_MIN, PlayersManager.NB_PLAYERS_PER_TEAM_MAX });
         minMaxIntValues.Add(NB_TEAMS,            new int[2] { PlayersManager.NB_TEAMS_MIN,            PlayersManager.NB_TEAMS_MAX });
-        minMaxIntValues.Add(GAME_TYPE,           new int[2] { (int) GameManager.GameType.Simple,      (int) GameManager.GameType.Advanced });
+        minMaxIntValues.Add(GAME_TYPE,           new int[2] { (int) GameManager.GameType.OrientColor,      (int) GameManager.GameType.OrientCardinal });
     }
 
     public DefaultValue GetDefaultValueForKey(string key)

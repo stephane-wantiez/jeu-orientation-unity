@@ -280,6 +280,8 @@ public class PlayersManager : MonoBehaviour
 
     public void onPlayerTurnDone()
     {
+        DicesManager.Instance.resetDices();
+
         if (hasCurrentPlayerWon())
         {
             GameManager.Instance.State = GameManager.GameState.GameOver;
