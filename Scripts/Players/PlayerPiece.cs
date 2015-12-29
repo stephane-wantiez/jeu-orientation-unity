@@ -8,11 +8,8 @@ public class PlayerPiece
 {
     private const int MAX_DISTANCE = 5;
 
-    public float fixedPositionInZWhenWaiting;
-    public float fixedPositionInZWhenPlaying;
-
     public Player player;
-    public PlayerIcon playerIcon;
+    public PlayerCharacter playerCharacter;
 
     public BoardCell currentCell;
     public Vector3 currentPosition;
@@ -27,18 +24,17 @@ public class PlayerPiece
         setAsPlaying(false, false);
     }
 
-    private void updateIconPosition()
-    {
-        currentPosition.z = playing ? fixedPositionInZWhenPlaying : fixedPositionInZWhenWaiting;
-        playerIcon.transform.position = currentPosition;
-    }
-
     public void setCurrentCell(BoardCell cell)
     {
         currentCell = cell;
         currentPosition = cell.transform.position;
         cell.piece = this;
-        updateIconPosition();
+    }
+
+    public void setInitialCell(BoardCell cell)
+    {
+        setCurrentCell(cell);
+        playerCharacter.SetInitialCell(cell);
     }
 
     public void onPlayerTurn(Player currentPlayer)
@@ -56,19 +52,7 @@ public class PlayerPiece
     private void setAsPlaying(bool inPlaying, bool teamPlaying)
     {
         playing = inPlaying;
-
-        if (playing)
-        {
-            playerIcon.setAsPlayer();
-        }
-        else if (teamPlaying)
-        {
-            playerIcon.setAsTeam();
-        }
-        else
-        {
-            playerIcon.setAsWaiting();
-        }
+        playerCharacter.SetAsPlaying(inPlaying, teamPlaying);
 
         foreach(BoardCell cell in moveCells)
         {
@@ -129,7 +113,7 @@ public class PlayerPiece
             cell.resetCellColor();
         }
         BoardCell lastCell = moveCells.Last();
-        playerIcon.moveOnPath(moveCells, onMovingOnCell, () => onMoveOnPathDone(onMoveDone, lastCell));
+        playerCharacter.MoveOnPath(moveCells, onMovingOnCell, () => onMoveOnPathDone(onMoveDone, lastCell));
     }
 
     public string toDebugStr()

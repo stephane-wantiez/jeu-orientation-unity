@@ -1,0 +1,15 @@
+﻿<color=black>##PROG##</color>
+<i>Stéphane Wantiez</i>
+
+<color=black>##DESIGN##</color>
+<i>Patricia Wantiez</i>
+
+<color=black>##IDEA##</color>
+<i>Françoise Baret</i>
+
+<color=black>##ITEMS_ART##</color>
+<i>Patricia Wantiez</i>
+
+<color=black>##CHAR_ART##</color>
+<i>Donna Rainsford</i>
+<color=grey><size=14>http://neurotic-doodle.deviantart.com</size></color>

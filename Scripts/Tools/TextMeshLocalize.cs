@@ -6,7 +6,12 @@ public class TextMeshLocalize : MonoBehaviour
 
     void Start()
     {
-        EasyFontTextMesh textMesh = GetComponent<EasyFontTextMesh>();
-        textMesh.Text = LocalizationUtils.GetLocalizedMessage(localizationKey);
+        string localizedText = LocalizationUtils.GetLocalizedMessage(localizationKey);
+
+        TextMesh textMesh = GetComponent<TextMesh>();
+        if (textMesh != null)
+        {
+            textMesh.text = localizedText;
+        }
     }
 }

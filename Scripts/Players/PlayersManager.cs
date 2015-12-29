@@ -11,6 +11,7 @@ public class PlayersManager : MonoBehaviour
     public const int NB_TEAMS_MIN = 1;
     public const int NB_TEAMS_DEF = 2;
     public const int NB_TEAMS_MAX = 3;
+    public const int MAX_NB_PLAYERS = 6;
     public const string LOCKEY_INFOS = "move_infos";
     public const string LOCKEY_PLAYER_TURN_START = "player_turn";
     public const string LOCKEY_PLAYER_STARTUP_POS = "startup_player_position";
@@ -30,7 +31,7 @@ public class PlayersManager : MonoBehaviour
     public float playerFixedPositionInZWhenPlaying;
 
     public PlayerUI[] playersUI;
-    public PlayerIcon[] playersIcons;
+    public PlayerCharacter[] playersCharacters;
     public Transform playersParent;
 
     public UIPanel changePiecePanel;
@@ -46,7 +47,7 @@ public class PlayersManager : MonoBehaviour
     [HideInInspector]
     public int currentPlayerIndex = 0;
 
-    private readonly List<PlayerIcon> availablePlayerIcons = new List<PlayerIcon>();
+    private readonly List<PlayerCharacter> availablePlayerCharacters = new List<PlayerCharacter>();
     private bool gameOngoing;
     private int playerCounter;
 
@@ -60,7 +61,7 @@ public class PlayersManager : MonoBehaviour
     void Start()
     {
         initPlayersIcons();
-        initializeTeams(); // TEMPORARY
+        initializePlayers(); // TEMPORARY
         GameManager.Instance.OnGameStateChangeEvents += onGameStateChange;
         Board.Instance.OnCellClickEvents += onCellClick;
         resetPlayers(false);
@@ -73,29 +74,19 @@ public class PlayersManager : MonoBehaviour
 
     private void initPlayersIcons()
     {
-        if ((playersIcons != null) && (playersIcons.Length != 0))
+        if ((playersCharacters != null) && (playersCharacters.Length != 0))
         {
-            bool checkOrientation = GameSettings.Instance.CheckOrientation;
-            PlayerIcon[] validPlayersIcons = Array.FindAll(playersIcons, p => p.orientedIcon == checkOrientation);
+            if (playersCharacters.Length < getNbPlayers()) Debug.LogWarning("There are less player characters available than players");
 
-            if (validPlayersIcons.Length != 0)
+            while (availablePlayerCharacters.Count < getNbPlayers())
             {
-                if (validPlayersIcons.Length < getNbPlayers()) Debug.LogWarning("There are less " + (checkOrientation ? "oriented" : "non oriented") + " player icons available than players");
-
-                while (availablePlayerIcons.Count < getNbPlayers())
-                {
-                    Array.ForEach(validPlayersIcons, p => availablePlayerIcons.Add(p));
-                }
-                availablePlayerIcons.ShuffleFY();
+                Array.ForEach(playersCharacters, p => availablePlayerCharacters.Add(p));
             }
-            else
-            {
-                Debug.LogError("Missing " + (checkOrientation ? "oriented" : "non oriented") + " player icons");
-            }
+            availablePlayerCharacters.ShuffleFY();
         }
         else
         {
-            Debug.LogError("Missing player icons");
+            Debug.LogError("Missing player characters");
         }
     }
 
@@ -122,50 +113,52 @@ public class PlayersManager : MonoBehaviour
         onPlayerPathDefined(false);
     }
 
-    public void initializeTeams()
+    public void initializePlayers()
     {
         playerCounter = 0;
         players = new Player[getNbPlayers()];
         teams = new PlayersTeam[nbTeams];
+        int[] indexOfPlayersInTeam = new int[nbTeams];
 
         for (int i = 0; i < nbTeams; ++i)
         {
             PlayersTeam team = new PlayersTeam();
             team.teamId = i;
+            team.players = new Player[nbPlayersPerTeam];
             teams[i] = team;
-            initializeTeamPlayers(team);
+            indexOfPlayersInTeam[i] = 0;
         }
 
-        currentPlayerIndex = 0;
-    }
+        int currentTeamIndex = 0;
 
-    public void initializeTeamPlayers(PlayersTeam team)
-    {
-        team.players = new Player[nbPlayersPerTeam];
-
-        for (int i = 0; i < nbPlayersPerTeam; ++i)
+        for (int i = 0; i < players.Length; ++i)
         {
             Player player = new Player();
             player.piece = new PlayerPiece();
             player.piece.player = player;
             player.id = playerCounter++;
-            player.team = team;
-            player.piece.fixedPositionInZWhenPlaying = playerFixedPositionInZWhenPlaying;
-            player.piece.fixedPositionInZWhenWaiting = playerFixedPositionInZWhenWaiting;
-            player.piece.playerIcon = availablePlayerIcons[0];
-            GameObject playerIconObject = Instantiate(player.piece.playerIcon.gameObject) as GameObject;
-            if (playerIconObject)
+            player.team = teams[currentTeamIndex];
+            player.piece.playerCharacter = availablePlayerCharacters[0];
+            GameObject playerCharacterObject = Instantiate(player.piece.playerCharacter.gameObject) as GameObject;
+            if (playerCharacterObject)
             {
-                player.piece.playerIcon = playerIconObject.GetComponent<PlayerIcon>();
-                player.piece.playerIcon.transform.parent = playersParent;
+                player.piece.playerCharacter = playerCharacterObject.GetComponent<PlayerCharacter>();
+                player.piece.playerCharacter.transform.parent = playersParent;
+                player.piece.playerCharacter.fixedPositionInZWhenPlaying = playerFixedPositionInZWhenPlaying;
+                player.piece.playerCharacter.fixedPositionInZWhenWaiting = playerFixedPositionInZWhenWaiting;
+                player.piece.playerCharacter.ShowPlayer(false);
             }
-            availablePlayerIcons.RemoveAt(0);
-            team.players[i] = player;
+            availablePlayerCharacters.RemoveAt(0);
+            teams[currentTeamIndex].players[indexOfPlayersInTeam[currentTeamIndex]] = player;
+            ++indexOfPlayersInTeam[currentTeamIndex];
             players[player.id] = player;
             playersUI[player.id].gameObject.SetActive(true);
             playersUI[player.id].initializeWithPlayer(player);
             player.piece.init();
+            currentTeamIndex = (currentTeamIndex + 1) % nbTeams;
         }
+
+        currentPlayerIndex = 0;
     }
 
     public void onPlayerTurnWindowClosed()
@@ -206,7 +199,7 @@ public class PlayersManager : MonoBehaviour
             randomCell = Board.Instance.getRandomCell();
             cellFound = (randomCell.treasure == null) && Array.TrueForAll(players, p => p.piece.currentCell != randomCell);
         }
-        player.piece.setCurrentCell(randomCell);
+        player.piece.setInitialCell(randomCell);
     }
 
     private void chooseStartupPositionForCurrentPlayer()
@@ -244,7 +237,7 @@ public class PlayersManager : MonoBehaviour
 
     public void displayPlayerTurnWindow()
     {
-        PopupManager.ShowCenterPopupWithMessage(onPlayerTurnWindowClosed, LOCKEY_PLAYER_TURN_START, currentPlayerIndex + 1);
+        PopupManager.ShowCenterPopupWithMessage(onPlayerTurnWindowClosed, LOCKEY_PLAYER_TURN_START, currentPlayerIndex + 1, getCurrentPlayerTeam().getTeamIdAsStr());
     }
 
     public void startPlayerTurn()

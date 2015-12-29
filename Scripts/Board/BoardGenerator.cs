@@ -39,7 +39,7 @@ public class BoardGenerator : MonoBehaviour
     public float boardPositionInZ;
     public IndexType rowIndexType;
     public IndexType columnIndexType;
-    public EasyFontTextMesh labelPrefab;
+    public TextMesh labelPrefab;
     public Transform horizontalLinePrefab;
     public Transform verticalLinePrefab;
     public BoardCell boardCellPrefab;
@@ -112,9 +112,8 @@ public class BoardGenerator : MonoBehaviour
         GameObject labelObject = Instantiate(labelPrefab.gameObject, position, Quaternion.identity) as GameObject;
         if (labelObject == null) return;
         labelObject.transform.parent = labelParent;
-        EasyFontTextMesh label = labelObject.GetComponent<EasyFontTextMesh>();
-        label.Text = labelStr;
-        label.RefreshMeshEditor();
+        TextMesh label = labelObject.GetComponent<TextMesh>();
+        label.text = labelStr;
     }
 
     private string getLabelForIndex(int index, IndexType indexType)
